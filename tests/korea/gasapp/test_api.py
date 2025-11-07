@@ -1,4 +1,5 @@
 """Test GasApp API client with both mock and real API calls."""
+
 import pytest
 import aiohttp
 from unittest.mock import AsyncMock
@@ -7,7 +8,7 @@ from custom_components.korea_incubator.gasapp.api import GasAppApiClient
 from custom_components.korea_incubator.gasapp.exceptions import (
     GasAppAuthError,
     GasAppConnectionError,
-    GasAppDataError
+    GasAppDataError,
 )
 
 
@@ -22,7 +23,9 @@ class TestGasAppApiMock:
         return client
 
     @pytest.mark.asyncio
-    async def test_validate_credentials_success(self, api_client, mock_session, gasapp_mock_response):
+    async def test_validate_credentials_success(
+        self, api_client, mock_session, gasapp_mock_response
+    ):
         """Test successful credential validation."""
         mock_response = AsyncMock()
         mock_response.status = 200
@@ -44,7 +47,9 @@ class TestGasAppApiMock:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_get_home_data_success(self, api_client, mock_session, gasapp_mock_response):
+    async def test_get_home_data_success(
+        self, api_client, mock_session, gasapp_mock_response
+    ):
         """Test successful home data retrieval."""
         mock_response = AsyncMock()
         mock_response.status = 200
@@ -87,7 +92,9 @@ class TestGasAppApiMock:
             await api_client.async_get_home_data()
 
     @pytest.mark.asyncio
-    async def test_get_bill_history_success(self, api_client, mock_session, gasapp_mock_response):
+    async def test_get_bill_history_success(
+        self, api_client, mock_session, gasapp_mock_response
+    ):
         """Test successful bill history retrieval."""
         mock_response = AsyncMock()
         mock_response.status = 200
@@ -110,7 +117,9 @@ class TestGasAppApiMock:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_get_current_bill_success(self, api_client, mock_session, gasapp_mock_response):
+    async def test_get_current_bill_success(
+        self, api_client, mock_session, gasapp_mock_response
+    ):
         """Test successful current bill retrieval."""
         mock_response = AsyncMock()
         mock_response.status = 200
@@ -130,14 +139,17 @@ class TestGasAppApiMock:
         with pytest.raises(GasAppAuthError, match="Credentials not set"):
             await client.async_get_home_data()
 
-    @pytest.mark.parametrize("token,member_id,contract_num", [
-        ("", "member", "contract"),
-        ("token", "", "contract"),
-        ("token", "member", ""),
-        (None, "member", "contract"),
-        ("token", None, "contract"),
-        ("token", "member", None),
-    ])
+    @pytest.mark.parametrize(
+        "token,member_id,contract_num",
+        [
+            ("", "member", "contract"),
+            ("token", "", "contract"),
+            ("token", "member", ""),
+            (None, "member", "contract"),
+            ("token", None, "contract"),
+            ("token", "member", None),
+        ],
+    )
     def test_invalid_credentials(self, mock_session, token, member_id, contract_num):
         """Test API client with invalid credentials."""
         client = GasAppApiClient(mock_session)
@@ -175,11 +187,13 @@ class TestGasAppApiIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_api_invalid_credentials(self, real_api_client):
         """Test real API with invalid credentials."""
-        real_api_client.set_credentials("invalid_token", "invalid_member", "invalid_contract")
+        real_api_client.set_credentials(
+            "invalid_token", "invalid_member", "invalid_contract"
+        )
 
         with pytest.raises((GasAppAuthError, GasAppConnectionError)):
             await real_api_client.async_get_home_data()
@@ -187,11 +201,13 @@ class TestGasAppApiIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_credential_validation_failure(self, real_api_client):
         """Test real credential validation with invalid data."""
-        real_api_client.set_credentials("invalid_token", "invalid_member", "invalid_contract")
+        real_api_client.set_credentials(
+            "invalid_token", "invalid_member", "invalid_contract"
+        )
 
         result = await real_api_client.async_validate_credentials()
         assert result is False
@@ -199,7 +215,7 @@ class TestGasAppApiIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_api_connection(self, real_api_client):
         """Test real API connection (should fail without valid credentials)."""
@@ -211,4 +227,3 @@ class TestGasAppApiIntegration:
         except (GasAppAuthError, GasAppConnectionError):
             # Expected to fail without proper authentication
             pass
-

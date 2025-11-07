@@ -1,4 +1,5 @@
 """Integration tests for Korea sensors with all services."""
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
@@ -19,8 +20,14 @@ class TestSensorIntegration:
         return AsyncMock()
 
     @pytest.mark.asyncio
-    async def test_setup_kepco_sensors(self, mock_hass, mock_entry_kepco, mock_add_entities,
-                                     mock_coordinator, kepco_mock_response):
+    async def test_setup_kepco_sensors(
+        self,
+        mock_hass,
+        mock_entry_kepco,
+        mock_add_entities,
+        mock_coordinator,
+        kepco_mock_response,
+    ):
         """Test KEPCO sensor setup."""
         # Setup coordinator data
         mock_coordinator.data = kepco_mock_response
@@ -35,7 +42,7 @@ class TestSensorIntegration:
         mock_hass.data[DOMAIN] = {
             mock_entry_kepco.entry_id: {
                 "coordinator": mock_coordinator,
-                "device": mock_device
+                "device": mock_device,
             }
         }
 
@@ -55,8 +62,14 @@ class TestSensorIntegration:
         assert "당월 예상 요금" in sensor_names
 
     @pytest.mark.asyncio
-    async def test_setup_gasapp_sensors(self, mock_hass, mock_entry_gasapp, mock_add_entities,
-                                      mock_coordinator, gasapp_mock_response):
+    async def test_setup_gasapp_sensors(
+        self,
+        mock_hass,
+        mock_entry_gasapp,
+        mock_add_entities,
+        mock_coordinator,
+        gasapp_mock_response,
+    ):
         """Test GasApp sensor setup."""
         mock_coordinator.data = {"current_bill": gasapp_mock_response["cards"]["bill"]}
 
@@ -68,7 +81,7 @@ class TestSensorIntegration:
         mock_hass.data[DOMAIN] = {
             mock_entry_gasapp.entry_id: {
                 "coordinator": mock_coordinator,
-                "device": mock_device
+                "device": mock_device,
             }
         }
 
@@ -82,12 +95,18 @@ class TestSensorIntegration:
         assert "지난달 가스 사용량" in sensor_names
 
     @pytest.mark.asyncio
-    async def test_setup_safety_alert_sensors(self, mock_hass, mock_entry_safety_alert, mock_add_entities,
-                                             mock_coordinator, safety_alert_mock_response):
+    async def test_setup_safety_alert_sensors(
+        self,
+        mock_hass,
+        mock_entry_safety_alert,
+        mock_add_entities,
+        mock_coordinator,
+        safety_alert_mock_response,
+    ):
         """Test Safety Alert sensor setup."""
         mock_coordinator.data = {
             "metadata": {"count": 2},
-            "parsed_data": {"data": safety_alert_mock_response["disasterSmsList"]}
+            "parsed_data": {"data": safety_alert_mock_response["disasterSmsList"]},
         }
 
         mock_device = MagicMock()
@@ -98,7 +117,7 @@ class TestSensorIntegration:
         mock_hass.data[DOMAIN] = {
             mock_entry_safety_alert.entry_id: {
                 "coordinator": mock_coordinator,
-                "device": mock_device
+                "device": mock_device,
             }
         }
 
@@ -112,7 +131,9 @@ class TestSensorIntegration:
         assert "최신 알림 내용" in sensor_names
 
     @pytest.mark.asyncio
-    async def test_setup_arisu_sensors(self, mock_hass, mock_add_entities, mock_coordinator, arisu_mock_response):
+    async def test_setup_arisu_sensors(
+        self, mock_hass, mock_add_entities, mock_coordinator, arisu_mock_response
+    ):
         """Test Arisu sensor setup."""
         entry = MagicMock()
         entry.entry_id = "test_arisu_entry"
@@ -126,10 +147,7 @@ class TestSensorIntegration:
         mock_device.device_info = {"name": "아리수 (test)"}
 
         mock_hass.data[DOMAIN] = {
-            entry.entry_id: {
-                "coordinator": mock_coordinator,
-                "device": mock_device
-            }
+            entry.entry_id: {"coordinator": mock_coordinator, "device": mock_device}
         }
 
         await async_setup_entry(mock_hass, entry, mock_add_entities)
@@ -142,7 +160,9 @@ class TestSensorIntegration:
         assert "고객 주소" in sensor_names
 
     @pytest.mark.asyncio
-    async def test_setup_kakaomap_sensors(self, mock_hass, mock_add_entities, mock_coordinator):
+    async def test_setup_kakaomap_sensors(
+        self, mock_hass, mock_add_entities, mock_coordinator
+    ):
         """Test KakaoMap sensor setup."""
         entry = MagicMock()
         entry.entry_id = "test_kakaomap_entry"
@@ -151,15 +171,15 @@ class TestSensorIntegration:
         mock_route_data = {
             "summary": {
                 "recommended_route": {"time": 28, "fare": 1370},
-                "total_routes": 3
+                "total_routes": 3,
             },
-            "routes": [{"time": 28, "fare": 1370, "type": "지하철"}]
+            "routes": [{"time": 28, "fare": 1370, "type": "지하철"}],
         }
 
         mock_coordinator.data = {
             "start_address": {"address": "건대입구역"},
             "end_address": {"address": "강남역"},
-            "transport_route": mock_route_data
+            "transport_route": mock_route_data,
         }
 
         mock_device = MagicMock()
@@ -168,10 +188,7 @@ class TestSensorIntegration:
         mock_device.device_info = {"name": "카카오맵 (집↔회사)"}
 
         mock_hass.data[DOMAIN] = {
-            entry.entry_id: {
-                "coordinator": mock_coordinator,
-                "device": mock_device
-            }
+            entry.entry_id: {"coordinator": mock_coordinator, "device": mock_device}
         }
 
         await async_setup_entry(mock_hass, entry, mock_add_entities)
@@ -196,7 +213,7 @@ class TestKoreaSensorEntity:
         device.device_info = {
             "identifiers": {("korea_incubator", "test_device")},
             "name": "Test Device",
-            "manufacturer": "Test Manufacturer"
+            "manufacturer": "Test Manufacturer",
         }
         return device
 
@@ -205,10 +222,7 @@ class TestKoreaSensorEntity:
         """Create test sensor."""
         mock_coordinator.data = {
             "usage_info": {
-                "result": {
-                    "BILL_LAST_MONTH": "25,000",
-                    "PREDICT_KWH": "150.5"
-                }
+                "result": {"BILL_LAST_MONTH": "25,000", "PREDICT_KWH": "150.5"}
             }
         }
 
@@ -220,7 +234,7 @@ class TestKoreaSensorEntity:
             "전월 요금",
             SensorDeviceClass.MONETARY,
             "KRW",
-            SensorStateClass.TOTAL
+            SensorStateClass.TOTAL,
         )
 
     def test_sensor_properties(self, test_sensor):
@@ -270,7 +284,7 @@ class TestKoreaSensorEntity:
             "전월 요금",
             SensorDeviceClass.MONETARY,
             "KRW",
-            SensorStateClass.TOTAL
+            SensorStateClass.TOTAL,
         )
 
         assert sensor.native_value is None
@@ -287,19 +301,28 @@ class TestKoreaSensorEntity:
             "전월 요금",
             SensorDeviceClass.MONETARY,
             "KRW",
-            SensorStateClass.TOTAL
+            SensorStateClass.TOTAL,
         )
 
         assert sensor.native_value is None
 
-    @pytest.mark.parametrize("device_class,raw_value,expected", [
-        (SensorDeviceClass.MONETARY, "25,000원", 25000),
-        (SensorDeviceClass.DURATION, "28분", 28),
-        (SensorDeviceClass.DISTANCE, "1,500m", 1500),
-        (SensorDeviceClass.GAS, "15.5m³", 15),
-        (None, "텍스트값", "텍스트값"),  # No conversion for non-numeric device classes
-    ])
-    def test_sensor_value_conversion(self, mock_coordinator, mock_device, device_class, raw_value, expected):
+    @pytest.mark.parametrize(
+        "device_class,raw_value,expected",
+        [
+            (SensorDeviceClass.MONETARY, "25,000원", 25000),
+            (SensorDeviceClass.DURATION, "28분", 28),
+            (SensorDeviceClass.DISTANCE, "1,500m", 1500),
+            (SensorDeviceClass.GAS, "15.5m³", 15),
+            (
+                None,
+                "텍스트값",
+                "텍스트값",
+            ),  # No conversion for non-numeric device classes
+        ],
+    )
+    def test_sensor_value_conversion(
+        self, mock_coordinator, mock_device, device_class, raw_value, expected
+    ):
         """Test various value conversions based on device class."""
         mock_coordinator.data = {"test_data": {"value": raw_value}}
 
@@ -311,8 +334,7 @@ class TestKoreaSensorEntity:
             "테스트 센서",
             device_class,
             "unit",
-            None
+            None,
         )
 
         assert sensor.native_value == expected
-

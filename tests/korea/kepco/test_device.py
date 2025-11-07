@@ -1,4 +1,5 @@
 """Test KEPCO device with both mock and real scenarios."""
+
 import pytest
 import aiohttp
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -22,11 +23,7 @@ class TestKepcoDeviceMock:
         """Create KEPCO device with mocked dependencies."""
         session = aiohttp.ClientSession()
         device = KepcoDevice(
-            mock_hass,
-            "test_entry",
-            "test_user",
-            "test_password",
-            session
+            mock_hass, "test_entry", "test_user", "test_password", session
         )
         device.api_client = mock_api_client
         yield device
@@ -44,10 +41,16 @@ class TestKepcoDeviceMock:
         assert device_info["model"] == "KEPCO"
 
     @pytest.mark.asyncio
-    async def test_async_update_success(self, kepco_device, mock_api_client, kepco_mock_response):
+    async def test_async_update_success(
+        self, kepco_device, mock_api_client, kepco_mock_response
+    ):
         """Test successful data update."""
-        mock_api_client.async_get_recent_usage.return_value = kepco_mock_response["recent_usage"]
-        mock_api_client.async_get_usage_info.return_value = kepco_mock_response["usage_info"]
+        mock_api_client.async_get_recent_usage.return_value = kepco_mock_response[
+            "recent_usage"
+        ]
+        mock_api_client.async_get_usage_info.return_value = kepco_mock_response[
+            "usage_info"
+        ]
 
         await kepco_device.async_update()
 
@@ -59,7 +62,9 @@ class TestKepcoDeviceMock:
     @pytest.mark.asyncio
     async def test_async_update_auth_error(self, kepco_device, mock_api_client):
         """Test update with authentication error."""
-        mock_api_client.async_get_recent_usage.side_effect = KepcoAuthError("Authentication failed")
+        mock_api_client.async_get_recent_usage.side_effect = KepcoAuthError(
+            "Authentication failed"
+        )
 
         with pytest.raises(UpdateFailed, match="Authentication error"):
             await kepco_device.async_update()
@@ -131,6 +136,7 @@ class TestKepcoDeviceIntegration:
     async def real_session(self):
         """Create real session for integration tests."""
         from curl_cffi import AsyncSession
+
         session = AsyncSession()
         yield session
         await session.close()
@@ -139,17 +145,13 @@ class TestKepcoDeviceIntegration:
     def real_kepco_device(self, mock_hass, real_session):
         """Create KEPCO device with real session."""
         return KepcoDevice(
-            mock_hass,
-            "test_entry_id",
-            "test_user",
-            "test_password",
-            real_session
+            mock_hass, "test_entry_id", "test_user", "test_password", real_session
         )
 
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_device_update_auth_failure(self, real_kepco_device):
         """Test real device update with invalid credentials."""
@@ -158,12 +160,17 @@ class TestKepcoDeviceIntegration:
 
         assert real_kepco_device.available is False
 
-    @pytest.mark.parametrize("username,password", [
-        ("", "password"),
-        ("username", ""),
-        (None, None),
-    ])
-    def test_device_with_invalid_credentials(self, mock_hass, mock_session, username, password):
+    @pytest.mark.parametrize(
+        "username,password",
+        [
+            ("", "password"),
+            ("username", ""),
+            (None, None),
+        ],
+    )
+    def test_device_with_invalid_credentials(
+        self, mock_hass, mock_session, username, password
+    ):
         """Test device creation with invalid credentials."""
         device = KepcoDevice(mock_hass, "test_entry", username, password, mock_session)
         assert device.username == username

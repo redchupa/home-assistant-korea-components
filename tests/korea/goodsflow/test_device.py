@@ -1,4 +1,5 @@
 """Test GoodsFlow device with both mock and real scenarios."""
+
 import pytest
 import aiohttp
 from unittest.mock import AsyncMock, MagicMock
@@ -8,7 +9,7 @@ from custom_components.korea_incubator.goodsflow.device import GoodsFlowDevice
 from custom_components.korea_incubator.goodsflow.exceptions import (
     GoodsFlowAuthError,
     GoodsFlowConnectionError,
-    GoodsFlowDataError
+    GoodsFlowDataError,
 )
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
@@ -25,12 +26,7 @@ class TestGoodsFlowDeviceMock:
     async def goodsflow_device(self, mock_hass, mock_session, mock_api_client):
         """Create GoodsFlow device with mocked dependencies."""
         session = aiohttp.ClientSession()
-        device = GoodsFlowDevice(
-            mock_hass,
-            "test_entry_id",
-            "test_token",
-            session
-        )
+        device = GoodsFlowDevice(mock_hass, "test_entry_id", "test_token", session)
         device.api_client = mock_api_client
         yield device
         await device.async_close_session()
@@ -47,13 +43,15 @@ class TestGoodsFlowDeviceMock:
         assert device_info["model"] == "택배조회"
 
     @pytest.mark.asyncio
-    async def test_async_update_success(self, goodsflow_device, mock_api_client, goodsflow_mock_response):
+    async def test_async_update_success(
+        self, goodsflow_device, mock_api_client, goodsflow_mock_response
+    ):
         """Test successful data update."""
         parsed_data = {
             "total_packages": 5,
             "active_packages": 2,
             "delivered_packages": 3,
-            "packages": goodsflow_mock_response["data"]["transList"]["rows"]
+            "packages": goodsflow_mock_response["data"]["transList"]["rows"],
         }
 
         mock_api_client.async_get_tracking_list.return_value = goodsflow_mock_response
@@ -69,7 +67,9 @@ class TestGoodsFlowDeviceMock:
     @pytest.mark.asyncio
     async def test_async_update_auth_error(self, goodsflow_device, mock_api_client):
         """Test update with authentication error."""
-        mock_api_client.async_get_tracking_list.side_effect = GoodsFlowAuthError("Authentication failed")
+        mock_api_client.async_get_tracking_list.side_effect = GoodsFlowAuthError(
+            "Authentication failed"
+        )
 
         with pytest.raises(UpdateFailed, match="Authentication failed"):
             await goodsflow_device.async_update()
@@ -77,11 +77,17 @@ class TestGoodsFlowDeviceMock:
         assert goodsflow_device.available is False
 
     @pytest.mark.asyncio
-    async def test_async_update_connection_error(self, goodsflow_device, mock_api_client):
+    async def test_async_update_connection_error(
+        self, goodsflow_device, mock_api_client
+    ):
         """Test update with connection error."""
-        mock_api_client.async_get_tracking_list.side_effect = GoodsFlowConnectionError("Connection failed")
+        mock_api_client.async_get_tracking_list.side_effect = GoodsFlowConnectionError(
+            "Connection failed"
+        )
 
-        with pytest.raises(UpdateFailed, match="Error communicating with GoodsFlow API"):
+        with pytest.raises(
+            UpdateFailed, match="Error communicating with GoodsFlow API"
+        ):
             await goodsflow_device.async_update()
 
         assert goodsflow_device.available is False
@@ -89,9 +95,13 @@ class TestGoodsFlowDeviceMock:
     @pytest.mark.asyncio
     async def test_async_update_data_error(self, goodsflow_device, mock_api_client):
         """Test update with data error."""
-        mock_api_client.async_get_tracking_list.side_effect = GoodsFlowDataError("Data parsing failed")
+        mock_api_client.async_get_tracking_list.side_effect = GoodsFlowDataError(
+            "Data parsing failed"
+        )
 
-        with pytest.raises(UpdateFailed, match="Error communicating with GoodsFlow API"):
+        with pytest.raises(
+            UpdateFailed, match="Error communicating with GoodsFlow API"
+        ):
             await goodsflow_device.async_update()
 
         assert goodsflow_device.available is False
@@ -102,7 +112,7 @@ class TestGoodsFlowDeviceMock:
             "parsed_data": {
                 "total_packages": 10,
                 "active_packages": 4,
-                "delivered_packages": 6
+                "delivered_packages": 6,
             }
         }
 
@@ -122,7 +132,7 @@ class TestGoodsFlowDeviceMock:
             "parsed_data": {
                 "total_packages": 10,
                 "active_packages": 4,
-                "delivered_packages": 6
+                "delivered_packages": 6,
             }
         }
 
@@ -135,7 +145,7 @@ class TestGoodsFlowDeviceMock:
             "parsed_data": {
                 "total_packages": 10,
                 "active_packages": 4,
-                "delivered_packages": 6
+                "delivered_packages": 6,
             }
         }
 
@@ -145,12 +155,7 @@ class TestGoodsFlowDeviceMock:
     @pytest.mark.asyncio
     async def test_async_close_session(self, mock_hass, mock_session):
         """Test session closure."""
-        device = GoodsFlowDevice(
-            mock_hass,
-            "test_entry_id",
-            "test_token",
-            mock_session
-        )
+        device = GoodsFlowDevice(mock_hass, "test_entry_id", "test_token", mock_session)
 
         await device.async_close_session()
 
@@ -163,13 +168,13 @@ class TestGoodsFlowDeviceMock:
             "total_packages": 5,
             "active_packages": 2,
             "delivered_packages": 3,
-            "packages": []
+            "packages": [],
         }
 
         goodsflow_device.data = {
             "raw_data": goodsflow_mock_response,
             "parsed_data": parsed_data,
-            "last_updated": datetime.now().isoformat()
+            "last_updated": datetime.now().isoformat(),
         }
 
         # Test data structure
@@ -198,17 +203,12 @@ class TestGoodsFlowDeviceIntegration:
     @pytest.fixture
     def real_goodsflow_device(self, mock_hass, real_session):
         """Create GoodsFlow device with real session."""
-        return GoodsFlowDevice(
-            mock_hass,
-            "test_entry_id",
-            "test_token",
-            real_session
-        )
+        return GoodsFlowDevice(mock_hass, "test_entry_id", "test_token", real_session)
 
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_device_update_auth_failure(self, real_goodsflow_device):
         """Test real device update with invalid token."""
@@ -220,29 +220,24 @@ class TestGoodsFlowDeviceIntegration:
     def test_device_token_storage(self, mock_hass, mock_session):
         """Test device token storage."""
         device = GoodsFlowDevice(
-            mock_hass,
-            "test_entry",
-            "my_secret_token",
-            mock_session
+            mock_hass, "test_entry", "my_secret_token", mock_session
         )
 
         assert device.token == "my_secret_token"
         assert device.unique_id == "goodsflow_my_secre"  # First 8 chars
 
-    @pytest.mark.parametrize("token", [
-        "short",
-        "very_long_token_that_exceeds_eight_characters",
-        "12345678",
-        "",
-    ])
+    @pytest.mark.parametrize(
+        "token",
+        [
+            "short",
+            "very_long_token_that_exceeds_eight_characters",
+            "12345678",
+            "",
+        ],
+    )
     def test_device_various_tokens(self, mock_hass, mock_session, token):
         """Test device creation with various token lengths."""
-        device = GoodsFlowDevice(
-            mock_hass,
-            "test_entry",
-            token,
-            mock_session
-        )
+        device = GoodsFlowDevice(mock_hass, "test_entry", token, mock_session)
 
         assert device.token == token
         # unique_id should be first 8 chars or less

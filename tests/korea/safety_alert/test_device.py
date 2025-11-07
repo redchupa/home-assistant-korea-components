@@ -1,4 +1,5 @@
 """Test Safety Alert device with both mock and real scenarios."""
+
 import pytest
 import aiohttp
 from unittest.mock import AsyncMock, MagicMock
@@ -7,7 +8,7 @@ from datetime import datetime
 from custom_components.korea_incubator.safety_alert.device import SafetyAlertDevice
 from custom_components.korea_incubator.safety_alert.exceptions import (
     SafetyAlertConnectionError,
-    SafetyAlertDataError
+    SafetyAlertDataError,
 )
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
@@ -31,7 +32,7 @@ class TestSafetyAlertDeviceMock:
             "서울특별시",
             "1111000000",
             "1111010100",
-            session
+            session,
         )
         device.api_client = mock_api_client
         yield device
@@ -49,9 +50,13 @@ class TestSafetyAlertDeviceMock:
         assert device_info["model"] == "안전알림서비스"
 
     @pytest.mark.asyncio
-    async def test_async_update_success(self, safety_alert_device, mock_api_client, safety_alert_mock_response):
+    async def test_async_update_success(
+        self, safety_alert_device, mock_api_client, safety_alert_mock_response
+    ):
         """Test successful data update."""
-        mock_api_client.async_get_safety_alerts.return_value = safety_alert_mock_response
+        mock_api_client.async_get_safety_alerts.return_value = (
+            safety_alert_mock_response
+        )
 
         await safety_alert_device.async_update()
 
@@ -75,11 +80,17 @@ class TestSafetyAlertDeviceMock:
         assert safety_alert_device.available is True
 
     @pytest.mark.asyncio
-    async def test_async_update_connection_error(self, safety_alert_device, mock_api_client):
+    async def test_async_update_connection_error(
+        self, safety_alert_device, mock_api_client
+    ):
         """Test update with connection error."""
-        mock_api_client.async_get_safety_alerts.side_effect = SafetyAlertConnectionError("Connection failed")
+        mock_api_client.async_get_safety_alerts.side_effect = (
+            SafetyAlertConnectionError("Connection failed")
+        )
 
-        with pytest.raises(UpdateFailed, match="Error communicating with Safety Alert API"):
+        with pytest.raises(
+            UpdateFailed, match="Error communicating with Safety Alert API"
+        ):
             await safety_alert_device.async_update()
 
         assert safety_alert_device.available is False
@@ -87,17 +98,25 @@ class TestSafetyAlertDeviceMock:
     @pytest.mark.asyncio
     async def test_async_update_data_error(self, safety_alert_device, mock_api_client):
         """Test update with data error."""
-        mock_api_client.async_get_safety_alerts.side_effect = SafetyAlertDataError("Data parsing failed")
+        mock_api_client.async_get_safety_alerts.side_effect = SafetyAlertDataError(
+            "Data parsing failed"
+        )
 
-        with pytest.raises(UpdateFailed, match="Error communicating with Safety Alert API"):
+        with pytest.raises(
+            UpdateFailed, match="Error communicating with Safety Alert API"
+        ):
             await safety_alert_device.async_update()
 
         assert safety_alert_device.available is False
 
     @pytest.mark.asyncio
-    async def test_async_update_general_error(self, safety_alert_device, mock_api_client):
+    async def test_async_update_general_error(
+        self, safety_alert_device, mock_api_client
+    ):
         """Test update with general error."""
-        mock_api_client.async_get_safety_alerts.side_effect = Exception("Unexpected error")
+        mock_api_client.async_get_safety_alerts.side_effect = Exception(
+            "Unexpected error"
+        )
 
         with pytest.raises(UpdateFailed, match="Unexpected error"):
             await safety_alert_device.async_update()
@@ -108,11 +127,7 @@ class TestSafetyAlertDeviceMock:
     async def test_async_close_session(self, mock_hass, mock_session):
         """Test session closure."""
         device = SafetyAlertDevice(
-            mock_hass,
-            "test_entry_id",
-            "1100000000",
-            "서울특별시",
-            session=mock_session
+            mock_hass, "test_entry_id", "1100000000", "서울특별시", session=mock_session
         )
 
         await device.async_close_session()
@@ -123,11 +138,7 @@ class TestSafetyAlertDeviceMock:
     def test_device_with_minimal_params(self, mock_hass, mock_session):
         """Test device creation with minimal parameters."""
         device = SafetyAlertDevice(
-            mock_hass,
-            "test_entry_id",
-            "1100000000",
-            "서울특별시",
-            session=mock_session
+            mock_hass, "test_entry_id", "1100000000", "서울특별시", session=mock_session
         )
 
         assert device.area_code == "1100000000"
@@ -144,7 +155,7 @@ class TestSafetyAlertDeviceMock:
             "서울특별시",
             "1111000000",
             "1111010100",
-            mock_session
+            mock_session,
         )
 
         assert device.area_code == "1100000000"
@@ -152,7 +163,9 @@ class TestSafetyAlertDeviceMock:
         assert device.area_code2 == "1111000000"
         assert device.area_code3 == "1111010100"
 
-    def test_data_structure_after_update(self, safety_alert_device, safety_alert_mock_response):
+    def test_data_structure_after_update(
+        self, safety_alert_device, safety_alert_mock_response
+    ):
         """Test data structure integrity after update."""
         # Simulate successful update
         safety_alert_device.data = {
@@ -174,7 +187,13 @@ class TestSafetyAlertDeviceMock:
 
         # Test first alert structure
         first_alert = parsed_data[0]
-        expected_fields = ["EMRGNCY_STEP_NM", "DSSTR_SE_NM", "MSG_CN", "RCV_AREA_NM", "REGIST_DT"]
+        expected_fields = [
+            "EMRGNCY_STEP_NM",
+            "DSSTR_SE_NM",
+            "MSG_CN",
+            "RCV_AREA_NM",
+            "REGIST_DT",
+        ]
         for field in expected_fields:
             assert field in first_alert
 
@@ -193,17 +212,13 @@ class TestSafetyAlertDeviceIntegration:
     def real_safety_alert_device(self, mock_hass, real_session):
         """Create Safety Alert device with real session."""
         return SafetyAlertDevice(
-            mock_hass,
-            "test_entry_id",
-            "1100000000",
-            "서울특별시",
-            session=real_session
+            mock_hass, "test_entry_id", "1100000000", "서울특별시", session=real_session
         )
 
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_device_update(self, real_safety_alert_device):
         """Test real device update."""
@@ -223,16 +238,12 @@ class TestSafetyAlertDeviceIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_device_invalid_area_code(self, mock_hass, real_session):
         """Test real device with invalid area code."""
         device = SafetyAlertDevice(
-            mock_hass,
-            "test_entry_id",
-            "9999999999",
-            "잘못된지역",
-            session=real_session
+            mock_hass, "test_entry_id", "9999999999", "잘못된지역", session=real_session
         )
 
         try:
@@ -246,24 +257,24 @@ class TestSafetyAlertDeviceIntegration:
         finally:
             await device.async_close_session()
 
-    @pytest.mark.parametrize("area_code,area_name", [
-        ("1100000000", "서울특별시"),
-        ("2600000000", "부산광역시"),
-        ("2700000000", "대구광역시"),
-        ("2800000000", "인천광역시"),
-    ])
-    def test_device_creation_various_areas(self, mock_hass, mock_session, area_code, area_name):
+    @pytest.mark.parametrize(
+        "area_code,area_name",
+        [
+            ("1100000000", "서울특별시"),
+            ("2600000000", "부산광역시"),
+            ("2700000000", "대구광역시"),
+            ("2800000000", "인천광역시"),
+        ],
+    )
+    def test_device_creation_various_areas(
+        self, mock_hass, mock_session, area_code, area_name
+    ):
         """Test device creation with various area codes."""
         device = SafetyAlertDevice(
-            mock_hass,
-            "test_entry_id",
-            area_code,
-            area_name,
-            session=mock_session
+            mock_hass, "test_entry_id", area_code, area_name, session=mock_session
         )
 
         assert device.area_code == area_code
         assert device.area_name == area_name
         assert device.unique_id == f"safety_alert_{area_code}"
         assert area_name in device._name
-

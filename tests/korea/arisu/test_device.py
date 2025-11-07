@@ -1,4 +1,5 @@
 """Test Arisu device with both mock and real scenarios."""
+
 import pytest
 import aiohttp
 from unittest.mock import AsyncMock, MagicMock
@@ -8,7 +9,7 @@ from custom_components.korea_incubator.arisu.device import ArisuDevice
 from custom_components.korea_incubator.arisu.exceptions import (
     ArisuAuthError,
     ArisuConnectionError,
-    ArisuDataError
+    ArisuDataError,
 )
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
@@ -25,13 +26,7 @@ class TestArisuDeviceMock:
     async def arisu_device(self, mock_hass, mock_session, mock_api_client):
         """Create Arisu device with mocked dependencies."""
         session = aiohttp.ClientSession()
-        device = ArisuDevice(
-            mock_hass,
-            "test_entry_id",
-            "042389659",
-            "홍길동",
-            session
-        )
+        device = ArisuDevice(mock_hass, "test_entry_id", "042389659", "홍길동", session)
         device.api_client = mock_api_client
         yield device
         await device.async_close_session()
@@ -48,7 +43,9 @@ class TestArisuDeviceMock:
         assert device_info["model"] == "아리수 상수도 고객센터"
 
     @pytest.mark.asyncio
-    async def test_async_update_success(self, arisu_device, mock_api_client, arisu_mock_response):
+    async def test_async_update_success(
+        self, arisu_device, mock_api_client, arisu_mock_response
+    ):
         """Test successful data update."""
         mock_api_client.async_get_water_bill_data.return_value = arisu_mock_response
 
@@ -61,7 +58,9 @@ class TestArisuDeviceMock:
     @pytest.mark.asyncio
     async def test_async_update_auth_error(self, arisu_device, mock_api_client):
         """Test update with authentication error."""
-        mock_api_client.async_get_water_bill_data.side_effect = ArisuAuthError("Authentication failed")
+        mock_api_client.async_get_water_bill_data.side_effect = ArisuAuthError(
+            "Authentication failed"
+        )
 
         with pytest.raises(UpdateFailed, match="Authentication failed"):
             await arisu_device.async_update()
@@ -71,7 +70,9 @@ class TestArisuDeviceMock:
     @pytest.mark.asyncio
     async def test_async_update_connection_error(self, arisu_device, mock_api_client):
         """Test update with connection error."""
-        mock_api_client.async_get_water_bill_data.side_effect = ArisuConnectionError("Connection failed")
+        mock_api_client.async_get_water_bill_data.side_effect = ArisuConnectionError(
+            "Connection failed"
+        )
 
         with pytest.raises(UpdateFailed, match="Error communicating with Arisu API"):
             await arisu_device.async_update()
@@ -81,7 +82,9 @@ class TestArisuDeviceMock:
     @pytest.mark.asyncio
     async def test_async_update_data_error(self, arisu_device, mock_api_client):
         """Test update with data error."""
-        mock_api_client.async_get_water_bill_data.side_effect = ArisuDataError("Data parsing failed")
+        mock_api_client.async_get_water_bill_data.side_effect = ArisuDataError(
+            "Data parsing failed"
+        )
 
         with pytest.raises(UpdateFailed, match="Error communicating with Arisu API"):
             await arisu_device.async_update()
@@ -93,7 +96,7 @@ class TestArisuDeviceMock:
         """Test update with API returning failure."""
         mock_api_client.async_get_water_bill_data.return_value = {
             "success": False,
-            "error": "No data found"
+            "error": "No data found",
         }
 
         with pytest.raises(UpdateFailed, match="No data found"):
@@ -154,11 +157,7 @@ class TestArisuDeviceMock:
     async def test_async_close_session(self, mock_hass, mock_session):
         """Test session closure."""
         device = ArisuDevice(
-            mock_hass,
-            "test_entry_id",
-            "042389659",
-            "홍길동",
-            mock_session
+            mock_hass, "test_entry_id", "042389659", "홍길동", mock_session
         )
 
         await device.async_close_session()
@@ -170,7 +169,7 @@ class TestArisuDeviceMock:
         """Test device data structure integrity."""
         arisu_device.data = {
             "bill_data": arisu_mock_response,
-            "last_updated": datetime.now().isoformat()
+            "last_updated": datetime.now().isoformat(),
         }
 
         # Test data structure
@@ -200,17 +199,13 @@ class TestArisuDeviceIntegration:
     def real_arisu_device(self, mock_hass, real_session):
         """Create Arisu device with real session."""
         return ArisuDevice(
-            mock_hass,
-            "test_entry_id",
-            "042389659",
-            "홍길동",
-            real_session
+            mock_hass, "test_entry_id", "042389659", "홍길동", real_session
         )
 
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_device_update(self, real_arisu_device):
         """Test real device update."""
@@ -224,20 +219,21 @@ class TestArisuDeviceIntegration:
             # Expected to fail with test credentials
             assert real_arisu_device.available is False
 
-    @pytest.mark.parametrize("customer_number,customer_name", [
-        ("042389659", "홍길동"),
-        ("123456789", "김철수"),
-        ("", "홍길동"),  # Empty customer number
-        ("042389659", ""),  # Empty customer name
-    ])
-    def test_device_creation_various_data(self, mock_hass, mock_session, customer_number, customer_name):
+    @pytest.mark.parametrize(
+        "customer_number,customer_name",
+        [
+            ("042389659", "홍길동"),
+            ("123456789", "김철수"),
+            ("", "홍길동"),  # Empty customer number
+            ("042389659", ""),  # Empty customer name
+        ],
+    )
+    def test_device_creation_various_data(
+        self, mock_hass, mock_session, customer_number, customer_name
+    ):
         """Test device creation with various customer data."""
         device = ArisuDevice(
-            mock_hass,
-            "test_entry",
-            customer_number,
-            customer_name,
-            mock_session
+            mock_hass, "test_entry", customer_number, customer_name, mock_session
         )
 
         assert device.customer_number == customer_number

@@ -1,4 +1,5 @@
 """Test KakaoMap API client with both mock and real API calls."""
+
 import pytest
 import aiohttp
 from unittest.mock import AsyncMock
@@ -6,7 +7,7 @@ from unittest.mock import AsyncMock
 from custom_components.korea_incubator.kakaomap.api import KakaoMapApiClient
 from custom_components.korea_incubator.kakaomap.exceptions import (
     KakaoMapConnectionError,
-    KakaoMapDataError
+    KakaoMapDataError,
 )
 
 
@@ -19,7 +20,9 @@ class TestKakaoMapApiMock:
         return KakaoMapApiClient(mock_session)
 
     @pytest.mark.asyncio
-    async def test_coordinate_to_address_success(self, api_client, mock_session, kakaomap_mock_address_response):
+    async def test_coordinate_to_address_success(
+        self, api_client, mock_session, kakaomap_mock_address_response
+    ):
         """Test successful coordinate to address conversion."""
         mock_response = AsyncMock()
         mock_response.status = 200
@@ -27,7 +30,7 @@ class TestKakaoMapApiMock:
             "old": {"name": "서울시 광진구 건대입구역"},
             "region": "서울시 광진구",
             "x": 515290,
-            "y": 1122478
+            "y": 1122478,
         }
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
@@ -49,7 +52,9 @@ class TestKakaoMapApiMock:
             await api_client.async_coordinate_to_address(515290, 1122478)
 
     @pytest.mark.asyncio
-    async def test_coordinate_to_address_connection_error(self, api_client, mock_session):
+    async def test_coordinate_to_address_connection_error(
+        self, api_client, mock_session
+    ):
         """Test coordinate conversion with connection error."""
         mock_session.get.side_effect = aiohttp.ClientError("Connection failed")
 
@@ -57,21 +62,27 @@ class TestKakaoMapApiMock:
             await api_client.async_coordinate_to_address(515290, 1122478)
 
     @pytest.mark.asyncio
-    async def test_get_public_transport_route_success(self, api_client, mock_session, kakaomap_mock_route_response):
+    async def test_get_public_transport_route_success(
+        self, api_client, mock_session, kakaomap_mock_route_response
+    ):
         """Test successful public transport route retrieval."""
         mock_response = AsyncMock()
         mock_response.status = 200
         mock_response.json.return_value = kakaomap_mock_route_response
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
-        result = await api_client.async_get_public_transport_route(515290, 1122478, 506190, 1110730)
+        result = await api_client.async_get_public_transport_route(
+            515290, 1122478, 506190, 1110730
+        )
 
         assert result == kakaomap_mock_route_response
         assert "in_local" in result
         assert "routes" in result["in_local"]
 
     @pytest.mark.asyncio
-    async def test_get_public_transport_route_with_time(self, api_client, mock_session, kakaomap_mock_route_response):
+    async def test_get_public_transport_route_with_time(
+        self, api_client, mock_session, kakaomap_mock_route_response
+    ):
         """Test public transport route with specific start time."""
         mock_response = AsyncMock()
         mock_response.status = 200
@@ -88,7 +99,9 @@ class TestKakaoMapApiMock:
         assert call_args[1]["params"]["startAt"] == "202501151400"
 
     @pytest.mark.asyncio
-    async def test_get_public_transport_route_json_error(self, api_client, mock_session):
+    async def test_get_public_transport_route_json_error(
+        self, api_client, mock_session
+    ):
         """Test route retrieval with JSON parsing error."""
         mock_response = AsyncMock()
         mock_response.status = 200
@@ -96,7 +109,9 @@ class TestKakaoMapApiMock:
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
         with pytest.raises(KakaoMapDataError):
-            await api_client.async_get_public_transport_route(515290, 1122478, 506190, 1110730)
+            await api_client.async_get_public_transport_route(
+                515290, 1122478, 506190, 1110730
+            )
 
     def test_parse_address_response_success(self, api_client):
         """Test address response parsing."""
@@ -104,7 +119,7 @@ class TestKakaoMapApiMock:
             "old": {"name": "서울시 광진구 건대입구역"},
             "region": "서울시 광진구",
             "x": 515290,
-            "y": 1122478
+            "y": 1122478,
         }
 
         result = api_client._parse_address_response(data)
@@ -121,12 +136,15 @@ class TestKakaoMapApiMock:
         assert result["success"] is True
         assert result["address"] is None
 
-    @pytest.mark.parametrize("x,y", [
-        (515290, 1122478),
-        (506190, 1110730),
-        (127.027621, 37.497952),  # WGS84 coordinates
-        (0, 0),  # Edge case
-    ])
+    @pytest.mark.parametrize(
+        "x,y",
+        [
+            (515290, 1122478),
+            (506190, 1110730),
+            (127.027621, 37.497952),  # WGS84 coordinates
+            (0, 0),  # Edge case
+        ],
+    )
     @pytest.mark.asyncio
     async def test_various_coordinates(self, api_client, mock_session, x, y):
         """Test with various coordinate combinations."""
@@ -159,7 +177,7 @@ class TestKakaoMapApiIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_coordinate_to_address(self, real_api_client):
         """Test real coordinate to address conversion."""
@@ -176,7 +194,7 @@ class TestKakaoMapApiIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_public_transport_route(self, real_api_client):
         """Test real public transport route."""

@@ -1,4 +1,5 @@
 """GasApp API client for Home Assistant integration."""
+
 from typing import Dict, Any, Optional
 
 import aiohttp
@@ -52,7 +53,9 @@ class GasAppApiClient:
         headers = self._get_headers()
 
         try:
-            async with self._session.request(method, url, headers=headers, **kwargs) as response:
+            async with self._session.request(
+                method, url, headers=headers, **kwargs
+            ) as response:
                 LOGGER.debug(f"GasApp API request to {url} status: {response.status}")
 
                 if response.status == 401:
@@ -60,7 +63,9 @@ class GasAppApiClient:
                 elif response.status == 403:
                     raise GasAppAuthError("Access denied")
                 elif response.status >= 400:
-                    raise GasAppConnectionError(f"HTTP {response.status}: {response.reason}")
+                    raise GasAppConnectionError(
+                        f"HTTP {response.status}: {response.reason}"
+                    )
 
                 response.raise_for_status()
                 return await response.json()
@@ -80,7 +85,7 @@ class GasAppApiClient:
         params = {
             "useContractNum": self._use_contract_num,
             "customerNum": "",
-            "amiYn": "N"
+            "amiYn": "N",
         }
 
         return await self._request("GET", "home", params=params)

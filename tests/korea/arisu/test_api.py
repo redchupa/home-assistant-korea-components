@@ -1,4 +1,5 @@
 """Test Arisu API client with both mock and real API calls."""
+
 import pytest
 import aiohttp
 from unittest.mock import AsyncMock, patch
@@ -8,7 +9,7 @@ from custom_components.korea_incubator.arisu.api import ArisuApiClient
 from custom_components.korea_incubator.arisu.exceptions import (
     ArisuAuthError,
     ArisuConnectionError,
-    ArisuDataError
+    ArisuDataError,
 )
 
 
@@ -23,7 +24,7 @@ class TestArisuApiMock:
     @pytest.fixture
     def mock_html_response(self):
         """Create mock HTML response with bill data."""
-        return '''
+        return """
         <html>
             <body>
                 <input id="totAmt" value="45000" />
@@ -37,10 +38,12 @@ class TestArisuApiMock:
                 </table>
             </body>
         </html>
-        '''
+        """
 
     @pytest.mark.asyncio
-    async def test_get_water_bill_data_success(self, api_client, mock_session, mock_html_response):
+    async def test_get_water_bill_data_success(
+        self, api_client, mock_session, mock_html_response
+    ):
         """Test successful water bill data retrieval."""
         # Mock session initialization
         init_response = AsyncMock()
@@ -58,7 +61,10 @@ class TestArisuApiMock:
 
         assert result["success"] is True
         assert result["total_amount"] == 45000
-        assert result["billing_month"] in ["2025-01", "2024-12"]  # Current or previous month
+        assert result["billing_month"] in [
+            "2025-01",
+            "2024-12",
+        ]  # Current or previous month
 
     @pytest.mark.asyncio
     async def test_get_water_bill_no_data(self, api_client, mock_session):
@@ -69,7 +75,7 @@ class TestArisuApiMock:
 
         bill_response = AsyncMock()
         bill_response.status = 200
-        bill_response.text.return_value = '<html><body>No data</body></html>'
+        bill_response.text.return_value = "<html><body>No data</body></html>"
 
         mock_session.get.return_value.__aenter__.return_value = init_response
         mock_session.post.return_value.__aenter__.return_value = bill_response
@@ -116,7 +122,9 @@ class TestArisuApiMock:
         mock_session.get.return_value.__aenter__.return_value = init_response
         mock_session.post.return_value.__aenter__.return_value = bill_response
 
-        with patch('custom_components.korea_incubator.arisu.api.BeautifulSoup') as mock_soup:
+        with patch(
+            "custom_components.korea_incubator.arisu.api.BeautifulSoup"
+        ) as mock_soup:
             mock_soup.side_effect = Exception("Parsing failed")
 
             with pytest.raises(ArisuDataError):
@@ -147,15 +155,24 @@ class TestArisuApiMock:
         assert api_client._clean_amount("") == 0
         assert api_client._clean_amount(None) == 0
 
-    @pytest.mark.parametrize("customer_number,customer_name", [
-        ("042389659", "홍길동"),
-        ("123456789", "김철수"),
-        ("", "홍길동"),  # Empty customer number
-        ("042389659", ""),  # Empty customer name
-    ])
+    @pytest.mark.parametrize(
+        "customer_number,customer_name",
+        [
+            ("042389659", "홍길동"),
+            ("123456789", "김철수"),
+            ("", "홍길동"),  # Empty customer number
+            ("042389659", ""),  # Empty customer name
+        ],
+    )
     @pytest.mark.asyncio
-    async def test_various_customer_data(self, api_client, mock_session, mock_html_response,
-                                       customer_number, customer_name):
+    async def test_various_customer_data(
+        self,
+        api_client,
+        mock_session,
+        mock_html_response,
+        customer_number,
+        customer_name,
+    ):
         """Test with various customer data combinations."""
         init_response = AsyncMock()
         init_response.status = 200
@@ -167,7 +184,9 @@ class TestArisuApiMock:
         mock_session.get.return_value.__aenter__.return_value = init_response
         mock_session.post.return_value.__aenter__.return_value = bill_response
 
-        result = await api_client.async_get_water_bill_data(customer_number, customer_name)
+        result = await api_client.async_get_water_bill_data(
+            customer_number, customer_name
+        )
 
         # Should handle various inputs gracefully
         assert "success" in result
@@ -191,7 +210,7 @@ class TestArisuApiIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_api_invalid_credentials(self, real_api_client):
         """Test real API with invalid credentials."""
@@ -203,12 +222,14 @@ class TestArisuApiIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_api_connection(self, real_api_client):
         """Test real API connection."""
         try:
-            result = await real_api_client.async_get_water_bill_data("042389659", "홍길동")
+            result = await real_api_client.async_get_water_bill_data(
+                "042389659", "홍길동"
+            )
 
             # Should return valid structure regardless of success
             assert "success" in result
@@ -224,7 +245,7 @@ class TestArisuApiIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_session_initialization(self, real_api_client):
         """Test real session initialization."""

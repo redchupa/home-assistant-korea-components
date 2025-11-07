@@ -1,6 +1,7 @@
 """
 Test KEPCO API client with both mock and real API calls.
 """
+
 import pytest
 import aiohttp
 from unittest.mock import AsyncMock, patch
@@ -62,10 +63,7 @@ class TestKepcoApiMock:
         mock_response = AsyncMock()
         mock_response.status = 200
         mock_response.json.return_value = {
-            "result": {
-                "F_AP_QT": "123.45",
-                "ST_TIME": "2025-01-15 14:30:00"
-            }
+            "result": {"F_AP_QT": "123.45", "ST_TIME": "2025-01-15 14:30:00"}
         }
         mock_session.post.return_value.__aenter__.return_value = mock_response
 
@@ -82,7 +80,7 @@ class TestKepcoApiMock:
             "result": {
                 "BILL_LAST_MONTH": "25000",
                 "PREDICT_TOTAL_CHARGE_REV": "30000",
-                "PREDICT_KWH": "150.5"
+                "PREDICT_KWH": "150.5",
             }
         }
         mock_session.post.return_value.__aenter__.return_value = mock_response
@@ -129,7 +127,7 @@ class TestKepcoApiIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_login_invalid_credentials(self, real_api_client):
         """Test real API with invalid credentials."""
@@ -139,25 +137,30 @@ class TestKepcoApiIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_api_connection(self, real_api_client):
         """Test real API connection (should fail without valid credentials)."""
         try:
             await real_api_client.async_get_recent_usage()
             assert False, "Should have raised an exception"
-        except (KepcoAuthError):
+        except KepcoAuthError:
             # Expected to fail without proper authentication
             pass
 
-    @pytest.mark.parametrize("username,password", [
-        ("", "password"),
-        ("username", ""),
-        ("", ""),
-        (None, "password"),
-        ("username", None),
-    ])
-    async def test_invalid_credentials_validation(self, real_api_client, username, password):
+    @pytest.mark.parametrize(
+        "username,password",
+        [
+            ("", "password"),
+            ("username", ""),
+            ("", ""),
+            (None, "password"),
+            ("username", None),
+        ],
+    )
+    async def test_invalid_credentials_validation(
+        self, real_api_client, username, password
+    ):
         """Test validation of invalid credentials."""
         with pytest.raises((KepcoAuthError, ValueError)):
             await real_api_client.async_login(username, password)

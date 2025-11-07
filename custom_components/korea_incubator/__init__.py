@@ -32,7 +32,7 @@ DeviceType = Union[
     SafetyAlertDevice,
     GoodsFlowDevice,
     ArisuDevice,
-    KakaoMapDevice
+    KakaoMapDevice,
 ]
 
 
@@ -49,7 +49,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry.entry_id,
             entry.data.get(CONF_USERNAME),
             entry.data.get(CONF_PASSWORD),
-            curl_cffi.AsyncSession()
+            curl_cffi.AsyncSession(),
         )
 
         # Initial login and data fetch
@@ -75,7 +75,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             except KepcoAuthError as err:
                 raise UpdateFailed(f"Authentication failed for KEPCO: {err}") from err
             except Exception as err:
-                raise UpdateFailed(f"Error communicating with KEPCO API: {err}") from err
+                raise UpdateFailed(
+                    f"Error communicating with KEPCO API: {err}"
+                ) from err
 
     elif service == "gasapp":
         update_interval = timedelta(hours=1)
@@ -85,7 +87,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry.data.get("token"),
             entry.data.get("member_id"),
             entry.data.get("use_contract_num"),
-            aiohttp.ClientSession()
+            aiohttp.ClientSession(),
         )
 
         # Initial validation and data fetch
@@ -108,7 +110,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             except GasAppAuthError as err:
                 raise UpdateFailed(f"Authentication failed for GasApp: {err}") from err
             except Exception as err:
-                raise UpdateFailed(f"Error communicating with GasApp API: {err}") from err
+                raise UpdateFailed(
+                    f"Error communicating with GasApp API: {err}"
+                ) from err
 
     elif service == "safety_alert":
         update_interval = timedelta(minutes=5)
@@ -119,7 +123,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry.data.get("area_name"),
             entry.data.get("area_code2"),
             entry.data.get("area_code3"),
-            aiohttp.ClientSession()
+            aiohttp.ClientSession(),
         )
 
         # Initial validation and data fetch
@@ -140,17 +144,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 await device.async_update()
                 return device.data
             except (SafetyAlertConnectionError, SafetyAlertDataError) as err:
-                raise UpdateFailed(f"Error communicating with SafetyAlert API: {err}") from err
+                raise UpdateFailed(
+                    f"Error communicating with SafetyAlert API: {err}"
+                ) from err
             except Exception as err:
-                raise UpdateFailed(f"Error communicating with SafetyAlert API: {err}") from err
+                raise UpdateFailed(
+                    f"Error communicating with SafetyAlert API: {err}"
+                ) from err
 
     elif service == "goodsflow":
         update_interval = timedelta(minutes=15)
         device = GoodsFlowDevice(
-            hass,
-            entry.entry_id,
-            entry.data.get("token"),
-            aiohttp.ClientSession()
+            hass, entry.entry_id, entry.data.get("token"), aiohttp.ClientSession()
         )
 
         # Initial validation and data fetch
@@ -171,9 +176,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 await device.async_update()
                 return device.data
             except GoodsFlowAuthError as err:
-                raise UpdateFailed(f"Authentication failed for GoodsFlow: {err}") from err
+                raise UpdateFailed(
+                    f"Authentication failed for GoodsFlow: {err}"
+                ) from err
             except Exception as err:
-                raise UpdateFailed(f"Error communicating with GoodsFlow API: {err}") from err
+                raise UpdateFailed(
+                    f"Error communicating with GoodsFlow API: {err}"
+                ) from err
 
     elif service == "arisu":
         update_interval = timedelta(minutes=30)
@@ -182,7 +191,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry.entry_id,
             entry.data.get("customer_number"),
             entry.data.get("customer_name"),
-            aiohttp.ClientSession()
+            aiohttp.ClientSession(),
         )
 
         # Initial validation and data fetch
@@ -205,7 +214,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             except ArisuAuthError as err:
                 raise UpdateFailed(f"Authentication failed for Arisu: {err}") from err
             except Exception as err:
-                raise UpdateFailed(f"Error communicating with Arisu API: {err}") from err
+                raise UpdateFailed(
+                    f"Error communicating with Arisu API: {err}"
+                ) from err
 
     elif service == "kakaomap":
         update_interval = timedelta(minutes=1)
@@ -215,7 +226,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry.data.get("name"),
             entry.data.get("start_coords"),
             entry.data.get("end_coords"),
-            aiohttp.ClientSession()
+            aiohttp.ClientSession(),
         )
 
         # Initial validation and data fetch
@@ -236,9 +247,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 await device.async_update()
                 return device.data
             except (KakaoMapConnectionError, KakaoMapDataError) as err:
-                raise UpdateFailed(f"Error communicating with KakaoMap API: {err}") from err
+                raise UpdateFailed(
+                    f"Error communicating with KakaoMap API: {err}"
+                ) from err
             except Exception as err:
-                raise UpdateFailed(f"Error communicating with KakaoMap API: {err}") from err
+                raise UpdateFailed(
+                    f"Error communicating with KakaoMap API: {err}"
+                ) from err
 
     else:
         LOGGER.error(f"Unknown service: {service}")
@@ -250,7 +265,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         LOGGER,
         name=f"{DOMAIN}_{service}",
         update_method=async_update_data,
-        update_interval=update_interval
+        update_interval=update_interval,
     )
 
     # Store coordinator and device in hass.data

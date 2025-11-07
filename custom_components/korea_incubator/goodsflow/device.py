@@ -1,4 +1,5 @@
 """GoodsFlow device for Home Assistant integration."""
+
 from datetime import datetime
 
 import aiohttp

@@ -1,4 +1,5 @@
 """Test Korea integration initialization and setup."""
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 import aiohttp
@@ -39,13 +40,15 @@ class TestKoreaIntegrationSetup:
     @pytest.mark.asyncio
     async def test_setup_kepco_success(self, mock_hass, mock_entry_kepco):
         """Test successful KEPCO setup."""
-        with patch('custom_components.korea_incubator.KepcoDevice') as mock_device_class:
+        with patch(
+            "custom_components.korea_incubator.KepcoDevice"
+        ) as mock_device_class:
             mock_device = AsyncMock()
             mock_device.async_update = AsyncMock()
             mock_device.async_close_session = AsyncMock()
             mock_device_class.return_value = mock_device
 
-            with patch('custom_components.korea_incubator.curl_cffi.AsyncSession'):
+            with patch("custom_components.korea_incubator.curl_cffi.AsyncSession"):
                 result = await async_setup_entry(mock_hass, mock_entry_kepco)
 
                 assert result is True
@@ -55,7 +58,9 @@ class TestKoreaIntegrationSetup:
     @pytest.mark.asyncio
     async def test_setup_gasapp_success(self, mock_hass, mock_entry_gasapp):
         """Test successful GasApp setup."""
-        with patch('custom_components.korea_incubator.GasAppDevice') as mock_device_class:
+        with patch(
+            "custom_components.korea_incubator.GasAppDevice"
+        ) as mock_device_class:
             mock_device = AsyncMock()
             mock_device.async_update = AsyncMock()
             mock_device.async_close_session = AsyncMock()
@@ -70,7 +75,9 @@ class TestKoreaIntegrationSetup:
     @pytest.mark.asyncio
     async def test_setup_safety_alert_success(self, mock_hass, mock_entry_safety_alert):
         """Test successful Safety Alert setup."""
-        with patch('custom_components.korea_incubator.SafetyAlertDevice') as mock_device_class:
+        with patch(
+            "custom_components.korea_incubator.SafetyAlertDevice"
+        ) as mock_device_class:
             mock_device = AsyncMock()
             mock_device.async_update = AsyncMock()
             mock_device.async_close_session = AsyncMock()
@@ -97,13 +104,15 @@ class TestKoreaIntegrationSetup:
         """Test KEPCO setup with authentication failure."""
         from custom_components.korea_incubator.kepco.exceptions import KepcoAuthError
 
-        with patch('custom_components.korea_incubator.KepcoDevice') as mock_device_class:
+        with patch(
+            "custom_components.korea_incubator.KepcoDevice"
+        ) as mock_device_class:
             mock_device = AsyncMock()
             mock_device.async_update.side_effect = KepcoAuthError("Auth failed")
             mock_device.async_close_session = AsyncMock()
             mock_device_class.return_value = mock_device
 
-            with patch('custom_components.korea_incubator.curl_cffi.AsyncSession'):
+            with patch("custom_components.korea_incubator.curl_cffi.AsyncSession"):
                 result = await async_setup_entry(mock_hass, mock_entry_kepco)
 
                 assert result is False
@@ -116,11 +125,13 @@ class TestKoreaIntegrationSetup:
         mock_hass.data[DOMAIN] = {
             mock_entry_kepco.entry_id: {
                 "device": AsyncMock(),
-                "coordinator": MagicMock()
+                "coordinator": MagicMock(),
             }
         }
 
-        with patch.object(mock_hass.config_entries, 'async_unload_platforms') as mock_unload:
+        with patch.object(
+            mock_hass.config_entries, "async_unload_platforms"
+        ) as mock_unload:
             mock_unload.return_value = True
 
             result = await async_unload_entry(mock_hass, mock_entry_kepco)
@@ -131,13 +142,17 @@ class TestKoreaIntegrationSetup:
     @pytest.mark.asyncio
     async def test_platforms_loaded(self, mock_hass, mock_entry_kepco):
         """Test that correct platforms are loaded."""
-        with patch('custom_components.korea_incubator.KepcoDevice') as mock_device_class:
+        with patch(
+            "custom_components.korea_incubator.KepcoDevice"
+        ) as mock_device_class:
             mock_device = AsyncMock()
             mock_device.async_update = AsyncMock()
             mock_device_class.return_value = mock_device
 
-            with patch('custom_components.korea_incubator.curl_cffi.AsyncSession'):
-                with patch.object(mock_hass.config_entries, 'async_forward_entry_setups') as mock_forward:
+            with patch("custom_components.korea_incubator.curl_cffi.AsyncSession"):
+                with patch.object(
+                    mock_hass.config_entries, "async_forward_entry_setups"
+                ) as mock_forward:
                     await async_setup_entry(mock_hass, mock_entry_kepco)
 
                     mock_forward.assert_called_once_with(mock_entry_kepco, PLATFORMS)
@@ -145,13 +160,17 @@ class TestKoreaIntegrationSetup:
     @pytest.mark.asyncio
     async def test_coordinator_creation(self, mock_hass, mock_entry_kepco):
         """Test that DataUpdateCoordinator is created correctly."""
-        with patch('custom_components.korea_incubator.KepcoDevice') as mock_device_class:
+        with patch(
+            "custom_components.korea_incubator.KepcoDevice"
+        ) as mock_device_class:
             mock_device = AsyncMock()
             mock_device.async_update = AsyncMock()
             mock_device_class.return_value = mock_device
 
-            with patch('custom_components.korea_incubator.curl_cffi.AsyncSession'):
-                with patch('custom_components.korea_incubator.DataUpdateCoordinator') as mock_coordinator_class:
+            with patch("custom_components.korea_incubator.curl_cffi.AsyncSession"):
+                with patch(
+                    "custom_components.korea_incubator.DataUpdateCoordinator"
+                ) as mock_coordinator_class:
                     mock_coordinator = MagicMock()
                     mock_coordinator.async_config_entry_first_refresh = AsyncMock()
                     mock_coordinator_class.return_value = mock_coordinator
@@ -162,16 +181,23 @@ class TestKoreaIntegrationSetup:
                     mock_coordinator_class.assert_called_once()
                     mock_coordinator.async_config_entry_first_refresh.assert_called_once()
 
-    @pytest.mark.parametrize("service", [
-        "kepco", "gasapp", "safety_alert", "goodsflow", "arisu", "kakaomap"
-    ])
+    @pytest.mark.parametrize(
+        "service", ["kepco", "gasapp", "safety_alert", "goodsflow", "arisu", "kakaomap"]
+    )
     def test_all_services_supported(self, service):
         """Test that all services are recognized in setup."""
         from custom_components.korea_incubator import async_setup_entry
 
         # This test verifies the service names are properly handled
         # The actual implementation check is done in the setup function
-        assert service in ["kepco", "gasapp", "safety_alert", "goodsflow", "arisu", "kakaomap"]
+        assert service in [
+            "kepco",
+            "gasapp",
+            "safety_alert",
+            "goodsflow",
+            "arisu",
+            "kakaomap",
+        ]
 
 
 class TestKoreaIntegrationData:
@@ -193,10 +219,10 @@ class TestKoreaIntegrationData:
         from custom_components.korea_incubator.const import LOGGER
 
         assert LOGGER is not None
-        assert hasattr(LOGGER, 'debug')
-        assert hasattr(LOGGER, 'info')
-        assert hasattr(LOGGER, 'warning')
-        assert hasattr(LOGGER, 'error')
+        assert hasattr(LOGGER, "debug")
+        assert hasattr(LOGGER, "info")
+        assert hasattr(LOGGER, "warning")
+        assert hasattr(LOGGER, "error")
 
     def test_currency_constant(self):
         """Test currency constant is defined."""

@@ -1,4 +1,5 @@
 """Test KakaoMap device with both mock and real scenarios."""
+
 import pytest
 import aiohttp
 from unittest.mock import AsyncMock, MagicMock
@@ -7,7 +8,7 @@ from datetime import datetime
 from custom_components.korea_incubator.kakaomap.device import KakaoMapDevice
 from custom_components.korea_incubator.kakaomap.exceptions import (
     KakaoMapConnectionError,
-    KakaoMapDataError
+    KakaoMapDataError,
 )
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
@@ -30,7 +31,7 @@ class TestKakaoMapDeviceMock:
             "집↔회사",
             {"x": 515290, "y": 1122478},
             {"x": 506190, "y": 1110730},
-            session
+            session,
         )
         device.api_client = mock_api_client
         yield device
@@ -48,11 +49,20 @@ class TestKakaoMapDeviceMock:
         assert device_info["model"] == "카카오맵"
 
     @pytest.mark.asyncio
-    async def test_async_update_success(self, kakaomap_device, mock_api_client,
-                                       kakaomap_mock_address_response, kakaomap_mock_route_response):
+    async def test_async_update_success(
+        self,
+        kakaomap_device,
+        mock_api_client,
+        kakaomap_mock_address_response,
+        kakaomap_mock_route_response,
+    ):
         """Test successful data update."""
-        mock_api_client.async_coordinate_to_address.return_value = kakaomap_mock_address_response
-        mock_api_client.async_get_public_transport_route.return_value = kakaomap_mock_route_response
+        mock_api_client.async_coordinate_to_address.return_value = (
+            kakaomap_mock_address_response
+        )
+        mock_api_client.async_get_public_transport_route.return_value = (
+            kakaomap_mock_route_response
+        )
 
         await kakaomap_device.async_update()
 
@@ -62,9 +72,13 @@ class TestKakaoMapDeviceMock:
         assert kakaomap_device.available is True
 
     @pytest.mark.asyncio
-    async def test_async_update_connection_error(self, kakaomap_device, mock_api_client):
+    async def test_async_update_connection_error(
+        self, kakaomap_device, mock_api_client
+    ):
         """Test update with connection error."""
-        mock_api_client.async_coordinate_to_address.side_effect = KakaoMapConnectionError("Connection failed")
+        mock_api_client.async_coordinate_to_address.side_effect = (
+            KakaoMapConnectionError("Connection failed")
+        )
 
         with pytest.raises(UpdateFailed, match="Error communicating with KakaoMap API"):
             await kakaomap_device.async_update()
@@ -74,14 +88,18 @@ class TestKakaoMapDeviceMock:
     @pytest.mark.asyncio
     async def test_async_update_data_error(self, kakaomap_device, mock_api_client):
         """Test update with data error."""
-        mock_api_client.async_coordinate_to_address.side_effect = KakaoMapDataError("Data parsing failed")
+        mock_api_client.async_coordinate_to_address.side_effect = KakaoMapDataError(
+            "Data parsing failed"
+        )
 
         with pytest.raises(UpdateFailed, match="Error communicating with KakaoMap API"):
             await kakaomap_device.async_update()
 
         assert kakaomap_device.available is False
 
-    def test_parse_transport_route_success(self, kakaomap_device, kakaomap_mock_route_response):
+    def test_parse_transport_route_success(
+        self, kakaomap_device, kakaomap_mock_route_response
+    ):
         """Test transport route parsing."""
         result = kakaomap_device._parse_transport_route(kakaomap_mock_route_response)
 
@@ -124,20 +142,26 @@ class TestKakaoMapDeviceMock:
         assert kakaomap_device._extract_distance_km({}) is None
 
     @pytest.mark.asyncio
-    async def test_async_get_address_from_coordinates(self, kakaomap_device, mock_api_client):
+    async def test_async_get_address_from_coordinates(
+        self, kakaomap_device, mock_api_client
+    ):
         """Test address retrieval from coordinates."""
         mock_api_client.async_coordinate_to_address.return_value = {
             "success": True,
-            "address": "서울시 강남구 테헤란로"
+            "address": "서울시 강남구 테헤란로",
         }
 
         result = await kakaomap_device.async_get_address_from_coordinates(127.0, 37.5)
         assert result == "서울시 강남구 테헤란로"
 
     @pytest.mark.asyncio
-    async def test_async_get_route_between_coordinates(self, kakaomap_device, mock_api_client, kakaomap_mock_route_response):
+    async def test_async_get_route_between_coordinates(
+        self, kakaomap_device, mock_api_client, kakaomap_mock_route_response
+    ):
         """Test route retrieval between coordinates."""
-        mock_api_client.async_get_public_transport_route.return_value = kakaomap_mock_route_response
+        mock_api_client.async_get_public_transport_route.return_value = (
+            kakaomap_mock_route_response
+        )
 
         result = await kakaomap_device.async_get_route_between_coordinates(
             515290, 1122478, 506190, 1110730
@@ -155,7 +179,7 @@ class TestKakaoMapDeviceMock:
             "테스트경로",
             start_coords,
             end_coords,
-            mock_session
+            mock_session,
         )
 
         assert device.start_coords == start_coords
@@ -182,13 +206,13 @@ class TestKakaoMapDeviceIntegration:
             "집↔회사",
             {"x": 515290, "y": 1122478},
             {"x": 506190, "y": 1110730},
-            real_session
+            real_session,
         )
 
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_device_update(self, real_kakaomap_device):
         """Test real device update."""
@@ -204,23 +228,23 @@ class TestKakaoMapDeviceIntegration:
             # May fail due to API limitations or network issues
             pytest.skip(f"Real API test failed (expected): {e}")
 
-    @pytest.mark.parametrize("name,start_x,start_y,end_x,end_y", [
-        ("집↔회사", 515290, 1122478, 506190, 1110730),
-        ("학교↔도서관", 127.0, 37.5, 127.1, 37.6),
-        ("테스트", 0, 0, 1, 1),  # Edge case
-    ])
-    def test_device_creation_various_coords(self, mock_hass, mock_session, name, start_x, start_y, end_x, end_y):
+    @pytest.mark.parametrize(
+        "name,start_x,start_y,end_x,end_y",
+        [
+            ("집↔회사", 515290, 1122478, 506190, 1110730),
+            ("학교↔도서관", 127.0, 37.5, 127.1, 37.6),
+            ("테스트", 0, 0, 1, 1),  # Edge case
+        ],
+    )
+    def test_device_creation_various_coords(
+        self, mock_hass, mock_session, name, start_x, start_y, end_x, end_y
+    ):
         """Test device creation with various coordinates."""
         start_coords = {"x": start_x, "y": start_y}
         end_coords = {"x": end_x, "y": end_y}
 
         device = KakaoMapDevice(
-            mock_hass,
-            "test_entry",
-            name,
-            start_coords,
-            end_coords,
-            mock_session
+            mock_hass, "test_entry", name, start_coords, end_coords, mock_session
         )
 
         assert device.name == name

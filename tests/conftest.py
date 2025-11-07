@@ -1,4 +1,5 @@
 """Test configuration and fixtures for Korea integration tests."""
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 import aiohttp
@@ -12,14 +13,15 @@ def pytest_addoption(parser):
         "--integration",
         action="store_true",
         default=False,
-        help="Run integration tests with real API calls"
+        help="Run integration tests with real API calls",
     )
 
 
 def pytest_configure(config):
     """Configure pytest markers."""
     config.addinivalue_line(
-        "markers", "integration: mark test as integration test requiring real API access"
+        "markers",
+        "integration: mark test as integration test requiring real API access",
     )
 
 
@@ -30,7 +32,9 @@ def pytest_collection_modifyitems(config, items):
         return
 
     # Skip integration tests by default
-    skip_integration = pytest.mark.skip(reason="Integration tests disabled (use --integration to enable)")
+    skip_integration = pytest.mark.skip(
+        reason="Integration tests disabled (use --integration to enable)"
+    )
     for item in items:
         if "integration" in item.keywords:
             item.add_marker(skip_integration)
@@ -75,11 +79,7 @@ async def mock_session():
 @pytest.fixture
 def kepco_config_data():
     """KEPCO configuration data."""
-    return {
-        "service": "kepco",
-        "username": "test_user",
-        "password": "test_password"
-    }
+    return {"service": "kepco", "username": "test_user", "password": "test_password"}
 
 
 @pytest.fixture
@@ -98,7 +98,7 @@ def gasapp_config_data():
         "service": "gasapp",
         "token": "test_token",
         "member_id": "test_member",
-        "use_contract_num": "test_contract"
+        "use_contract_num": "test_contract",
     }
 
 
@@ -119,7 +119,7 @@ def safety_alert_config_data():
         "area_code": "1100000000",
         "area_name": "서울특별시",
         "sido_code": "1100000000",
-        "sido_name": "서울특별시"
+        "sido_name": "서울특별시",
     }
 
 
@@ -138,10 +138,7 @@ def kepco_mock_response():
     """Mock KEPCO API response."""
     return {
         "recent_usage": {
-            "result": {
-                "F_AP_QT": "123.45",
-                "ST_TIME": "2025-01-15 14:30:00"
-            }
+            "result": {"F_AP_QT": "123.45", "ST_TIME": "2025-01-15 14:30:00"}
         },
         "usage_info": {
             "result": {
@@ -151,13 +148,13 @@ def kepco_mock_response():
                 "F_AP_QT": "123.45",
                 "KWH_LAST_MONTH": "120.3",
                 "TOTAL_CHARGE": "28000",
-                "BILL_LEVEL": "2"
+                "BILL_LEVEL": "2",
             },
             "SESS_CUSTNO": "123456789",
             "SESS_CNTR_KND_NM": "주택용",
             "SESS_MR_ST_DT": "2025-01-01",
-            "SESS_MR_END_DT": "2025-01-31"
-        }
+            "SESS_MR_END_DT": "2025-01-31",
+        },
     }
 
 
@@ -173,19 +170,19 @@ def gasapp_mock_response():
                     {
                         "requestYm": "2025-01",
                         "usageQty": "25.5",
-                        "chargeAmtQty": "50000"
+                        "chargeAmtQty": "50000",
                     },
                     {
                         "requestYm": "2024-12",
                         "usageQty": "23.2",
-                        "chargeAmtQty": "45000"
+                        "chargeAmtQty": "45000",
                     },
                     {
                         "requestYm": "2024-11",
                         "usageQty": "20.1",
-                        "chargeAmtQty": "40000"
-                    }
-                ]
+                        "chargeAmtQty": "40000",
+                    },
+                ],
             }
         }
     }
@@ -201,19 +198,17 @@ def safety_alert_mock_response():
                 "DSSTR_SE_NM": "태풍",
                 "MSG_CN": "태풍 경보 발령",
                 "RCV_AREA_NM": "서울특별시",
-                "REGIST_DT": "2025-01-15 14:30:00"
+                "REGIST_DT": "2025-01-15 14:30:00",
             },
             {
                 "EMRGNCY_STEP_NM": "주의",
                 "DSSTR_SE_NM": "강풍",
                 "MSG_CN": "강풍 주의보 발령",
                 "RCV_AREA_NM": "서울특별시",
-                "REGIST_DT": "2025-01-14 10:00:00"
-            }
+                "REGIST_DT": "2025-01-14 10:00:00",
+            },
         ],
-        "rtnResult": {
-            "totCnt": 2
-        }
+        "rtnResult": {"totCnt": 2},
     }
 
 
@@ -227,17 +222,14 @@ def arisu_mock_response():
         "customer_info": {
             "customer_number": "042389659",
             "address": "서울시 강남구 테헤란로 123",
-            "payment_method": "자동이체"
+            "payment_method": "자동이체",
         },
         "usage_info": {
             "current_usage": 15,
             "current_reading": 12345,
-            "previous_reading": 12330
+            "previous_reading": 12330,
         },
-        "arrears_info": {
-            "overdue_amount": 0,
-            "unpaid_amount": 0
-        }
+        "arrears_info": {"overdue_amount": 0, "unpaid_amount": 0},
     }
 
 
@@ -253,16 +245,16 @@ def goodsflow_mock_response():
                     {
                         "status": "배송중",
                         "company": "CJ대한통운",
-                        "trackingNumber": "123456789"
+                        "trackingNumber": "123456789",
                     },
                     {
                         "status": "배송완료",
                         "company": "한진택배",
-                        "trackingNumber": "987654321"
-                    }
-                ]
+                        "trackingNumber": "987654321",
+                    },
+                ],
             }
-        }
+        },
     }
 
 
@@ -273,7 +265,7 @@ def kakaomap_mock_address_response():
         "success": True,
         "address": "서울시 광진구 건대입구역",
         "region": "서울시 광진구",
-        "coordinates": {"x": 515290, "y": 1122478}
+        "coordinates": {"x": 515290, "y": 1122478},
     }
 
 
@@ -298,15 +290,15 @@ def kakaomap_mock_route_response():
                         {
                             "information": "건대입구역에서 지하철 탑승",
                             "action": "지하철 탑승",
-                            "type": "subway"
+                            "type": "subway",
                         },
                         {
                             "information": "강남역에서 버스로 환승",
                             "type": "transfer",
                             "distance": {"value": 200},
-                            "time": {"value": 180}
-                        }
-                    ]
+                            "time": {"value": 180},
+                        },
+                    ],
                 }
             ]
         }

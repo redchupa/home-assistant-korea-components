@@ -1,4 +1,5 @@
 """Test GoodsFlow API client with both mock and real API calls."""
+
 import pytest
 import aiohttp
 from unittest.mock import AsyncMock
@@ -7,7 +8,7 @@ from custom_components.korea_incubator.goodsflow.api import GoodsFlowApiClient
 from custom_components.korea_incubator.goodsflow.exceptions import (
     GoodsFlowAuthError,
     GoodsFlowConnectionError,
-    GoodsFlowDataError
+    GoodsFlowDataError,
 )
 
 
@@ -22,7 +23,9 @@ class TestGoodsFlowApiMock:
         return client
 
     @pytest.mark.asyncio
-    async def test_validate_token_success(self, api_client, mock_session, goodsflow_mock_response):
+    async def test_validate_token_success(
+        self, api_client, mock_session, goodsflow_mock_response
+    ):
         """Test successful token validation."""
         mock_response = AsyncMock()
         mock_response.status = 200
@@ -44,7 +47,9 @@ class TestGoodsFlowApiMock:
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_get_tracking_list_success(self, api_client, mock_session, goodsflow_mock_response):
+    async def test_get_tracking_list_success(
+        self, api_client, mock_session, goodsflow_mock_response
+    ):
         """Test successful tracking list retrieval."""
         mock_response = AsyncMock()
         mock_response.status = 200
@@ -57,14 +62,18 @@ class TestGoodsFlowApiMock:
         assert "data" in result
 
     @pytest.mark.asyncio
-    async def test_get_tracking_list_with_params(self, api_client, mock_session, goodsflow_mock_response):
+    async def test_get_tracking_list_with_params(
+        self, api_client, mock_session, goodsflow_mock_response
+    ):
         """Test tracking list with custom parameters."""
         mock_response = AsyncMock()
         mock_response.status = 200
         mock_response.json.return_value = goodsflow_mock_response
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
-        result = await api_client.async_get_tracking_list(limit=20, start=10, type_filter="DELIVERY")
+        result = await api_client.async_get_tracking_list(
+            limit=20, start=10, type_filter="DELIVERY"
+        )
 
         # Verify parameters were passed correctly
         call_args = mock_session.get.call_args
@@ -154,15 +163,25 @@ class TestGoodsFlowApiMock:
 
         assert client._token == "new_token"
 
-    @pytest.mark.parametrize("limit,start,type_filter", [
-        (10, 0, "ALL"),
-        (20, 10, "DELIVERY"),
-        (5, 5, "PICKUP"),
-        (100, 0, "CUSTOM"),
-    ])
+    @pytest.mark.parametrize(
+        "limit,start,type_filter",
+        [
+            (10, 0, "ALL"),
+            (20, 10, "DELIVERY"),
+            (5, 5, "PICKUP"),
+            (100, 0, "CUSTOM"),
+        ],
+    )
     @pytest.mark.asyncio
-    async def test_various_tracking_params(self, api_client, mock_session, goodsflow_mock_response,
-                                         limit, start, type_filter):
+    async def test_various_tracking_params(
+        self,
+        api_client,
+        mock_session,
+        goodsflow_mock_response,
+        limit,
+        start,
+        type_filter,
+    ):
         """Test tracking list with various parameters."""
         mock_response = AsyncMock()
         mock_response.status = 200
@@ -193,7 +212,7 @@ class TestGoodsFlowApiIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_api_invalid_token(self, real_api_client):
         """Test real API with invalid token."""
@@ -205,7 +224,7 @@ class TestGoodsFlowApiIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_token_validation_failure(self, real_api_client):
         """Test real token validation with invalid token."""
@@ -217,7 +236,7 @@ class TestGoodsFlowApiIntegration:
     @pytest.mark.integration
     @pytest.mark.skipif(
         not pytest.config.getoption("--integration", default=False),
-        reason="Integration tests disabled"
+        reason="Integration tests disabled",
     )
     async def test_real_api_connection(self, real_api_client):
         """Test real API connection (should fail without valid token)."""
