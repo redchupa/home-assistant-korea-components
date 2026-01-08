@@ -1,5 +1,7 @@
 """GasApp API client for Home Assistant integration."""
 
+from __future__ import annotations
+
 from typing import Dict, Any, Optional
 
 import aiohttp
@@ -11,14 +13,17 @@ from ..const import LOGGER
 class GasAppApiClient:
     """API client for GasApp integration."""
 
-    def __init__(self, session: aiohttp.ClientSession):
-        self._session = session
-        self._token = None
-        self._member_id = None
-        self._use_contract_num = None
-        self._base_url = "https://app.gasapp.co.kr/api"
+    def __init__(self, session: aiohttp.ClientSession) -> None:
+        """Initialize the GasApp API client."""
+        self._session: aiohttp.ClientSession = session
+        self._token: Optional[str] = None
+        self._member_id: Optional[str] = None
+        self._use_contract_num: Optional[str] = None
+        self._base_url: str = "https://app.gasapp.co.kr/api"
 
-    def set_credentials(self, token: str, member_id: str, use_contract_num: str):
+    def set_credentials(
+        self, token: str, member_id: str, use_contract_num: str
+    ) -> None:
         """Set authentication credentials."""
         self._token = token
         self._member_id = member_id
