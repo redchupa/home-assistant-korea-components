@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional
 
 import aiohttp
 from curl_cffi import AsyncSession
@@ -13,7 +13,7 @@ from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .api import KepcoApiClient
 from .exceptions import KepcoAuthError
-from ..const import DOMAIN, LOGGER
+from ..const import DOMAIN, LOGGER, TZ_ASIA_SEOUL
 
 
 class KepcoDevice:
@@ -25,14 +25,14 @@ class KepcoDevice:
         entry_id: str,
         username: str,
         password: str,
-        session: Union[aiohttp.ClientSession, AsyncSession],
+        session: AsyncSession,  # curl_cffi.AsyncSession만 사용
     ) -> None:
         """Initialize KEPCO device."""
         self.hass: HomeAssistant = hass
         self.entry_id: str = entry_id
         self.username: str = username
         self.password: str = password
-        self.session: Union[aiohttp.ClientSession, AsyncSession] = session
+        self.session: AsyncSession = session  # curl_cffi.AsyncSession
         self.api_client: KepcoApiClient = KepcoApiClient(self.session)
         self.api_client.set_credentials(username, password)
 
@@ -73,7 +73,7 @@ class KepcoDevice:
                 "usage_info": usage_info,
             }
             self._available = True
-            self._last_update_success = datetime.now()
+            self._last_update_success = datetime.now(TZ_ASIA_SEOUL)
             LOGGER.debug(f"KEPCO data updated successfully for {self.username}")
         except KepcoAuthError as err:
             self._available = False
@@ -116,9 +116,9 @@ class KepcoDevice:
     async def async_close_session(self) -> None:
         """Close the session."""
         if self.session:
-            if isinstance(self.session, aiohttp.ClientSession):
-                if not self.session.closed:
-                    await self.session.close()
-            elif isinstance(self.session, AsyncSession):
+            try:
                 await self.session.close()
-            self.session = None
+            except Exception as e:
+                LOGGER.debug(f"Error closing session: {e}")
+            finally:
+                self.session = None

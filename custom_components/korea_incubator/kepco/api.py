@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional, Tuple
 from bs4 import BeautifulSoup
 from curl_cffi import AsyncSession
 
-from .exceptions import KepcoAuthError
+from .exceptions import KepcoAuthError, KepcoApiError
 from ..const import LOGGER
 from ..utils import RSAKey
 
@@ -118,8 +118,14 @@ class KepcoApiClient:
             LOGGER.debug(f"Login response body: {text}")
             
             if response.status_code == 200:
-                # 최종적으로 도달한 URL이 confirmInfo.do 이거나, 로그인 성공을 나타내는 페이지인지 확인
-                if "confirmInfo.do" in str(response.url):
+                # URL 체크 (None 안전하게 처리)
+                url_str = str(response.url) if response.url else ""
+                if "confirmInfo.do" in url_str or "main" in url_str:
+                    return True
+                
+                # 응답 본문에서 로그인 성공 확인 (추가 검증)
+                if "로그아웃" in text or "고객번호" in text or "전력사용량" in text:
+                    LOGGER.info("Login success confirmed by response content")
                     return True
             
             LOGGER.error(
@@ -131,7 +137,7 @@ class KepcoApiClient:
             return False
 
     async def _request(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
-        """Make an authenticated request to KEPCO API with auto re-login on 401."""
+        """Make an authenticated request to KEPCO API with auto re-login on auth errors."""
         try:
             response = await self._session.request(method, url, **kwargs)
             LOGGER.debug(
@@ -139,31 +145,50 @@ class KepcoApiClient:
             )
             LOGGER.debug(f"API request to {url} response headers: {response.headers}")
             LOGGER.debug(f"API request to {url} response body: {response.text}")
-            return json.loads(response.text)
-        except Exception as e:
-            LOGGER.error(f"API call to {url} failed: {e}")
-            LOGGER.warning("API call failed, attempting re-login.")
             
+            # 인증 오류 확인 (401, 403)
+            if response.status_code in (401, 403):
+                LOGGER.warning(f"Authentication error (status {response.status_code}), attempting re-login.")
+                raise KepcoAuthError(f"Authentication required: HTTP {response.status_code}")
+            
+            # JSON 파싱
+            try:
+                return json.loads(response.text)
+            except json.JSONDecodeError as e:
+                LOGGER.error(f"Invalid JSON response from {url}: {e}")
+                raise KepcoApiError(f"Invalid JSON response: {e}")
+                
+        except KepcoAuthError:
+            # 인증 오류에만 재로그인 시도
             if not self._username or not self._password:
                 raise KepcoAuthError("Credentials not set for re-login")
             
+            LOGGER.info("Attempting re-login after authentication error.")
             if await self.async_login(self._username, self._password):
                 LOGGER.info("Re-login successful, retrying original request.")
                 try:
                     response = await self._session.request(method, url, **kwargs)
                     LOGGER.debug(
-                        f"API request to {url} response status: {response.status_code}"
+                        f"Retry request to {url} response status: {response.status_code}"
                     )
-                    LOGGER.debug(
-                        f"API request to {url} response headers: {response.headers}"
-                    )
+                    
+                    if response.status_code in (401, 403):
+                        raise KepcoAuthError(f"Re-authentication failed: HTTP {response.status_code}")
+                    
                     return json.loads(response.text)
+                except json.JSONDecodeError as e:
+                    raise KepcoApiError(f"Invalid JSON response after retry: {e}")
                 except Exception as retry_e:
                     LOGGER.error(f"Retry request failed: {retry_e}")
-                    raise KepcoAuthError(f"Retry failed: {retry_e}") from retry_e
+                    raise KepcoApiError(f"Retry failed: {retry_e}") from retry_e
             else:
                 LOGGER.error("KEPCO Re-login failed.")
-                raise KepcoAuthError("Re-login failed") from e
+                raise KepcoAuthError("Re-login failed")
+                
+        except Exception as e:
+            # 기타 오류 (네트워크 등)는 재로그인 없이 바로 예외 발생
+            LOGGER.error(f"API call to {url} failed: {e}")
+            raise KepcoApiError(f"Request failed: {e}") from e
 
     async def async_get_recent_usage(self) -> Dict[str, Any]:
         """Get recent usage data from KEPCO."""
