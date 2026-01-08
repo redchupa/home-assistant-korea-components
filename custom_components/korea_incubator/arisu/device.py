@@ -12,7 +12,7 @@ from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .api import ArisuApiClient
 from .exceptions import ArisuAuthError, ArisuConnectionError, ArisuDataError
-from ..const import DOMAIN, LOGGER
+from ..const import DOMAIN, LOGGER, TZ_ASIA_SEOUL
 
 
 class ArisuDevice:
@@ -74,11 +74,11 @@ class ArisuDevice:
 
             self.data = {
                 "bill_data": bill_data,
-                "last_updated": datetime.now().isoformat(),
+                "last_updated": datetime.now(TZ_ASIA_SEOUL).isoformat(),
             }
 
             self._available = True
-            self._last_update_success = datetime.now()
+            self._last_update_success = datetime.now(TZ_ASIA_SEOUL)
             LOGGER.debug(f"Arisu data updated successfully for {self.customer_number}")
 
         except (ArisuAuthError, ArisuConnectionError, ArisuDataError) as err:
@@ -98,5 +98,9 @@ class ArisuDevice:
     async def async_close_session(self) -> None:
         """Close the aiohttp session."""
         if self.session:
-            await self.session.close()
-            self.session = None
+            try:
+                await self.session.close()
+            except Exception as e:
+                LOGGER.debug(f"Error closing session: {e}")
+            finally:
+                self.session = None
