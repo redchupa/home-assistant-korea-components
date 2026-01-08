@@ -15,7 +15,6 @@
     "curl-cffi>=0.7.4",
     "fake-useragent==1.5.1",
     "pycryptodome==3.20.0",
-    "voluptuous~=0.15.2"
+    "voluptuous>=0.15.2"
   ],
-  "version": "1.0.0"
-}
+  "version": "1.0.1"
