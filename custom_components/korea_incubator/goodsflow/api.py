@@ -1,6 +1,8 @@
 """GoodsFlow API client for Home Assistant integration."""
 
-from typing import Dict, Any
+from __future__ import annotations
+
+from typing import Dict, Any, Optional
 
 import aiohttp
 
@@ -11,12 +13,13 @@ from ..const import LOGGER
 class GoodsFlowApiClient:
     """API client for GoodsFlow integration."""
 
-    def __init__(self, session: aiohttp.ClientSession):
-        self._session = session
-        self._token = None
-        self._base_url = "https://ptk.goodsflow.com/ptk/rest"
+    def __init__(self, session: aiohttp.ClientSession) -> None:
+        """Initialize the GoodsFlow API client."""
+        self._session: aiohttp.ClientSession = session
+        self._token: Optional[str] = None
+        self._base_url: str = "https://ptk.goodsflow.com/ptk/rest"
 
-    def set_token(self, token: str):
+    def set_token(self, token: str) -> None:
         """Set authentication token."""
         self._token = token
 
@@ -38,7 +41,7 @@ class GoodsFlowApiClient:
     async def async_validate_token(self) -> bool:
         """Validate the provided token by making a test API call."""
         try:
-            data = await self.async_get_tracking_list()
+            await self.async_get_tracking_list()
             return True
         except Exception as e:
             LOGGER.error(f"Token validation failed: {e}")
