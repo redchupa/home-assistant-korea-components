@@ -12,7 +12,7 @@ from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .api import GasAppApiClient
 from .exceptions import GasAppAuthError, GasAppConnectionError, GasAppDataError
-from ..const import DOMAIN, LOGGER
+from ..const import DOMAIN, LOGGER, TZ_ASIA_SEOUL
 
 
 class GasAppDevice:
@@ -80,11 +80,11 @@ class GasAppDevice:
                 "home_data": home_data,
                 "bill_history": bill_history,
                 "current_bill": current_bill,
-                "last_updated": datetime.now().isoformat(),
+                "last_updated": datetime.now(TZ_ASIA_SEOUL).isoformat(),
             }
 
             self._available = True
-            self._last_update_success = datetime.now()
+            self._last_update_success = datetime.now(TZ_ASIA_SEOUL)
             LOGGER.debug(
                 f"GasApp data updated successfully for {self.use_contract_num}"
             )
@@ -148,5 +148,9 @@ class GasAppDevice:
     async def async_close_session(self) -> None:
         """Close the aiohttp session."""
         if self.session:
-            await self.session.close()
-            self.session = None
+            try:
+                await self.session.close()
+            except Exception as e:
+                LOGGER.debug(f"Error closing session: {e}")
+            finally:
+                self.session = None

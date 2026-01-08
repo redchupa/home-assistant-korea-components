@@ -75,12 +75,15 @@ class GasAppApiClient:
                 response.raise_for_status()
                 return await response.json()
 
+        except (GasAppAuthError, GasAppConnectionError, GasAppDataError):
+            # 이미 우리가 raise한 예외는 그대로 re-raise
+            raise
         except aiohttp.ClientError as e:
             LOGGER.error(f"GasApp API request failed: {e}")
-            raise GasAppConnectionError(f"Request failed: {e}")
+            raise GasAppConnectionError(f"Request failed: {e}") from e
         except Exception as e:
             LOGGER.error(f"Unexpected error in GasApp API request: {e}")
-            raise GasAppDataError(f"Unexpected error: {e}")
+            raise GasAppDataError(f"Unexpected error: {e}") from e
 
     async def async_get_home_data(self) -> Dict[str, Any]:
         """Get home dashboard data including bill information."""
