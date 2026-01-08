@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Dict, Any, Optional, Union, Callable
 
 from homeassistant.components.sensor import (
@@ -10,6 +11,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -36,7 +38,7 @@ DeviceType = Union[
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up Korea sensors from a config entry."""
     data: Dict[str, Any] = hass.data[DOMAIN][entry.entry_id]
@@ -1137,6 +1139,9 @@ class KoreaSensor(CoordinatorEntity, SensorEntity):
                     if parsed_datetime:
                         return parsed_datetime
                     return None
+                # If it's already a datetime object, return it as-is
+                elif isinstance(raw_value, datetime):
+                    return raw_value
 
             elif (
                 self._attr_device_class == SensorDeviceClass.MONETARY
