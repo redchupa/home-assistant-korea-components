@@ -1,3 +1,6 @@
+"""Exceptions for KEPCO integration."""
+
+
 class KepcoApiError(Exception):
     """Base exception for KEPCO API errors."""
 

@@ -1,4 +1,9 @@
+"""KEPCO API client for Home Assistant integration."""
+
+from __future__ import annotations
+
 import json
+from typing import Dict, Any, Optional, Tuple
 
 from bs4 import BeautifulSoup
 from curl_cffi import AsyncSession
@@ -9,16 +14,21 @@ from ..utils import RSAKey
 
 
 class KepcoApiClient:
-    def __init__(self, session: AsyncSession):
-        self._session = session
-        self._username = None
-        self._password = None
+    """API client for KEPCO integration using curl_cffi."""
 
-    def set_credentials(self, username, password):
+    def __init__(self, session: AsyncSession) -> None:
+        """Initialize the KEPCO API client."""
+        self._session: AsyncSession = session
+        self._username: Optional[str] = None
+        self._password: Optional[str] = None
+
+    def set_credentials(self, username: str, password: str) -> None:
+        """Set authentication credentials."""
         self._username = username
         self._password = password
 
-    async def async_get_session_and_rsa_key(self):
+    async def async_get_session_and_rsa_key(self) -> Tuple[str, str, str]:
+        """Get RSA key and session ID from KEPCO intro page."""
         url = "https://pp.kepco.co.kr:8030/intro.do"
 
         result = await self._session.get(url=url)
@@ -46,7 +56,8 @@ class KepcoApiClient:
 
         return rsa_modulus, rsa_exponent, sessid
 
-    async def async_login(self, username, password):
+    async def async_login(self, username: str, password: str) -> bool:
+        """Login to KEPCO with username and password."""
         self.set_credentials(username, password)
         try:
             (
@@ -105,10 +116,12 @@ class KepcoApiClient:
             LOGGER.debug(f"Login response headers: {response.headers}")
             text = response.text
             LOGGER.debug(f"Login response body: {text}")
+            
             if response.status_code == 200:
                 # 최종적으로 도달한 URL이 confirmInfo.do 이거나, 로그인 성공을 나타내는 페이지인지 확인
                 if "confirmInfo.do" in str(response.url):
                     return True
+            
             LOGGER.error(
                 f"KEPCO Login failed with status {response.status_code}: {text}"
             )
@@ -117,7 +130,8 @@ class KepcoApiClient:
             LOGGER.error(f"Login request failed: {e}")
             return False
 
-    async def _request(self, method, url, **kwargs):
+    async def _request(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
+        """Make an authenticated request to KEPCO API with auto re-login on 401."""
         try:
             response = await self._session.request(method, url, **kwargs)
             LOGGER.debug(
@@ -127,8 +141,12 @@ class KepcoApiClient:
             LOGGER.debug(f"API request to {url} response body: {response.text}")
             return json.loads(response.text)
         except Exception as e:
-            LOGGER.error(f"API call to {url} failed", e)
-            LOGGER.warning("API call failed with 401, attempting re-login.")
+            LOGGER.error(f"API call to {url} failed: {e}")
+            LOGGER.warning("API call failed, attempting re-login.")
+            
+            if not self._username or not self._password:
+                raise KepcoAuthError("Credentials not set for re-login")
+            
             if await self.async_login(self._username, self._password):
                 LOGGER.info("Re-login successful, retrying original request.")
                 try:
@@ -141,16 +159,18 @@ class KepcoApiClient:
                     )
                     return json.loads(response.text)
                 except Exception as retry_e:
-                    LOGGER.error(f"Retry request failed: {retry_e}", retry_e)
-                    raise KepcoAuthError(f"Retry failed: {retry_e}", retry_e)
+                    LOGGER.error(f"Retry request failed: {retry_e}")
+                    raise KepcoAuthError(f"Retry failed: {retry_e}") from retry_e
             else:
                 LOGGER.error("KEPCO Re-login failed.")
-            raise  # Re-raise if not 401 or re-login failed
+                raise KepcoAuthError("Re-login failed") from e
 
-    async def async_get_recent_usage(self):
+    async def async_get_recent_usage(self) -> Dict[str, Any]:
+        """Get recent usage data from KEPCO."""
         url = "https://pp.kepco.co.kr:8030/low/main/recent_usage.do"
         return await self._request("POST", url, json={})
 
-    async def async_get_usage_info(self):
+    async def async_get_usage_info(self) -> Dict[str, Any]:
+        """Get usage information from KEPCO."""
         url = "https://pp.kepco.co.kr:8030/low/main/usage_info.do"
         return await self._request("POST", url, json={"tou": "N"})
