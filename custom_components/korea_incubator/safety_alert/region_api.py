@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import ssl
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import aiohttp
 
@@ -17,7 +17,7 @@ class SafetyAlertRegionApiClient:
         """Initialize the Safety Alert Region API client."""
         self._session: aiohttp.ClientSession = session
         self._base_url: str = "https://www.safekorea.go.kr/idsiSFK/sfk/cs/sua/web"
-        self._ssl_context = None  # 지연 로딩을 위해 None으로 초기화
+        self._ssl_context: Optional[ssl.SSLContext] = None  # 타입 명시
 
     def _get_ssl_context(self) -> ssl.SSLContext:
         """Get SSL context with lazy loading to avoid blocking calls in event loop."""

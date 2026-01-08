@@ -21,7 +21,7 @@ class SafetyAlertApiClient:
         self._base_url: str = (
             "https://www.safekorea.go.kr/idsiSFK/sfk/cs/sua/web/DisasterSmsList.do"
         )
-        self._ssl_context = None  # 지연 로딩을 위해 None으로 초기화
+        self._ssl_context: Optional[ssl.SSLContext] = None  # 타입 명시
 
     def _get_ssl_context(self) -> ssl.SSLContext:
         """Get SSL context with lazy loading to avoid blocking calls in event loop."""
