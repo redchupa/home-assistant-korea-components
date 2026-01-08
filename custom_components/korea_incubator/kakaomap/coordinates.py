@@ -1,5 +1,7 @@
 """Coordinate system conversion utilities for KakaoMap integration."""
 
+from __future__ import annotations
+
 import math
 from typing import Dict, Tuple
 

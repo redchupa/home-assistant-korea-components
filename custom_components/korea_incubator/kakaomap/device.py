@@ -1,11 +1,15 @@
 """KakaoMap device for Home Assistant integration."""
 
+from __future__ import annotations
+
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 import aiohttp
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .api import KakaoMapApiClient
 from .exceptions import KakaoMapConnectionError, KakaoMapDataError
@@ -17,33 +21,36 @@ class KakaoMapDevice:
 
     def __init__(
         self,
-        hass,
+        hass: HomeAssistant,
         entry_id: str,
         name: str,
         start_coords: Dict[str, float],
         end_coords: Dict[str, float],
         session: aiohttp.ClientSession,
-    ):
-        self.hass = hass
-        self.entry_id = entry_id
-        self.name = name
-        self.start_coords = start_coords  # {"x": float, "y": float}
-        self.end_coords = end_coords  # {"x": float, "y": float}
-        self.session = session
-        self.api_client = KakaoMapApiClient(self.session)
+    ) -> None:
+        """Initialize KakaoMap device."""
+        self.hass: HomeAssistant = hass
+        self.entry_id: str = entry_id
+        self.name: str = name
+        self.start_coords: Dict[str, float] = start_coords  # {"x": float, "y": float}
+        self.end_coords: Dict[str, float] = end_coords  # {"x": float, "y": float}
+        self.session: aiohttp.ClientSession = session
+        self.api_client: KakaoMapApiClient = KakaoMapApiClient(self.session)
 
-        self._name = f"카카오맵 ({name})"
-        self._unique_id = f"kakaomap_{entry_id}"
-        self._available = True
-        self.data = {}
-        self._last_update_success = None
+        self._name: str = f"카카오맵 ({name})"
+        self._unique_id: str = f"kakaomap_{entry_id}"
+        self._available: bool = True
+        self.data: Dict[str, Any] = {}
+        self._last_update_success: Optional[datetime] = None
 
     @property
     def unique_id(self) -> str:
+        """Return unique ID."""
         return self._unique_id
 
     @property
     def device_info(self) -> DeviceInfo:
+        """Return device information."""
         return DeviceInfo(
             identifiers={(DOMAIN, self._unique_id)},
             name=self._name,
@@ -54,9 +61,10 @@ class KakaoMapDevice:
 
     @property
     def available(self) -> bool:
+        """Return if device is available."""
         return self._available
 
-    async def async_update(self):
+    async def async_update(self) -> None:
         """Fetch data from KakaoMap API."""
         try:
             # Get address information for start and end coordinates
@@ -86,11 +94,11 @@ class KakaoMapDevice:
                 "start_address": start_address,
                 "end_address": end_address,
                 "transport_route": transport_route,
-                "last_updated": datetime.now().isoformat(),
+                "last_updated": dt_util.now(),  # datetime 객체로 직접 저장
             }
 
             self._available = True
-            self._last_update_success = datetime.now()
+            self._last_update_success = dt_util.now()
             LOGGER.debug(f"KakaoMap data updated successfully for {self.name}")
 
         except (KakaoMapConnectionError, KakaoMapDataError) as err:
@@ -115,7 +123,7 @@ class KakaoMapDevice:
         routes = in_local.get("routes", [])
 
         # Create enhanced route data based on actual API structure
-        enhanced_routes = []
+        enhanced_routes: List[Dict[str, Any]] = []
         for route in routes:
             enhanced_route = {
                 "time": self._extract_minutes_from_time(route.get("time", {})),
@@ -185,7 +193,7 @@ class KakaoMapDevice:
             },
             "routes": enhanced_routes,
             "real_time_info": real_time_info,
-            "last_updated": datetime.now().isoformat(),
+            "last_updated": dt_util.now(),  # datetime 객체로 직접 저장
         }
 
     def _extract_minutes_from_time(self, time_data: Dict[str, Any]) -> Optional[int]:
@@ -249,7 +257,7 @@ class KakaoMapDevice:
                     return arrival_msg
         return None
 
-    def _create_route_summary(self, routes) -> str:
+    def _create_route_summary(self, routes: List[Dict[str, Any]]) -> str:
         """Create a summary of all available routes."""
         if not routes:
             return "경로 정보 없음"
@@ -271,10 +279,10 @@ class KakaoMapDevice:
 
         return summary
 
-    def _extract_real_time_info(self, routes) -> Dict[str, Any]:
+    def _extract_real_time_info(self, routes: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Extract real-time transportation information."""
-        subway_delays = []
-        bus_arrivals = []
+        subway_delays: List[str] = []
+        bus_arrivals: List[int] = []
 
         for route in routes:
             summaries = route.get("summaries", [])
@@ -330,7 +338,7 @@ class KakaoMapDevice:
             LOGGER.error(f"Error getting route between coordinates: {e}")
             return None
 
-    async def async_close_session(self):
+    async def async_close_session(self) -> None:
         """Close the aiohttp session."""
         if self.session:
             await self.session.close()

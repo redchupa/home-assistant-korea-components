@@ -1,5 +1,7 @@
 """KakaoMap API client for Home Assistant integration."""
 
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Dict, Any, Optional
 
@@ -12,9 +14,10 @@ from ..const import LOGGER
 class KakaoMapApiClient:
     """API client for KakaoMap integration."""
 
-    def __init__(self, session: aiohttp.ClientSession):
-        self._session = session
-        self._base_url = "https://map.kakao.com"
+    def __init__(self, session: aiohttp.ClientSession) -> None:
+        """Initialize the KakaoMap API client."""
+        self._session: aiohttp.ClientSession = session
+        self._base_url: str = "https://map.kakao.com"
 
     async def async_coordinate_to_address(
         self, x: float, y: float, coord_system: str = "WCONGNAMUL"
