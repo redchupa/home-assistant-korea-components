@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 from typing import Dict, Any, Optional, Union, Mapping
+from collections.abc import Callable
 
 import pytz
 from homeassistant.components.binary_sensor import (
@@ -11,6 +12,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -37,7 +39,9 @@ DeviceType = Union[
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Korea binary sensors from a config entry."""
     data: Dict[str, Any] = hass.data[DOMAIN][entry.entry_id]
@@ -75,13 +79,13 @@ class SafetyAlertSensor(CoordinatorEntity, BinarySensorEntity):
         id: str,
         device_class: Optional[BinarySensorDeviceClass] = None,
         icon: Optional[str] = None,
-    ):
+    ) -> None:
         """Initialize the safety alert sensor."""
         super().__init__(coordinator)
         self._device: SafetyAlertDevice = device
         self._attr_name: str = name
         self._attr_device_class: Optional[BinarySensorDeviceClass] = device_class
-        self._attr_is_on = False
+        self._attr_is_on: bool = False
         self._attr_icon: Optional[str] = icon
         self._attr_unique_id: str = f"korea_{device.unique_id}_{id}"
 
