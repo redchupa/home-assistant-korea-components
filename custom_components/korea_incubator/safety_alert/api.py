@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional
 import aiohttp
 
 from .exceptions import SafetyAlertConnectionError
-from ..const import LOGGER, SSL_CONTEXT
+from ..const import LOGGER, TZ_ASIA_SEOUL
 
 
 class SafetyAlertApiClient:
@@ -26,8 +26,8 @@ class SafetyAlertApiClient:
     def _get_ssl_context(self) -> ssl.SSLContext:
         """Get SSL context with lazy loading to avoid blocking calls in event loop."""
         if self._ssl_context is None:
-            # SSL 컨텍스트 설정 - DH_KEY_TOO_SMALL 에러 해결
-            self._ssl_context = SSL_CONTEXT
+            # SSL 컨텍스트 생성 - 공유 객체를 수정하지 않고 새로 생성
+            self._ssl_context = ssl.create_default_context()
             self._ssl_context.check_hostname = False
             self._ssl_context.verify_mode = ssl.CERT_NONE
 
@@ -60,8 +60,8 @@ class SafetyAlertApiClient:
         area_code3: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Get safety alerts for the specified areas."""
-        # Calculate date range (last 7 days)
-        end_date = datetime.now()
+        # Calculate date range (last 7 days) using Korea timezone
+        end_date = datetime.now(TZ_ASIA_SEOUL)
         start_date = end_date - timedelta(days=7)
 
         # Prepare request payload with all area codes
@@ -112,7 +112,7 @@ class SafetyAlertApiClient:
 
         except aiohttp.ClientError as e:
             LOGGER.error(f"Safety Alert API request failed: {e}")
-            return {}
+            raise SafetyAlertConnectionError(f"Request failed: {e}")
         except Exception as e:
             LOGGER.error(f"Unexpected error in Safety Alert API request: {e}")
-            return {}
+            raise SafetyAlertConnectionError(f"Unexpected error: {e}")

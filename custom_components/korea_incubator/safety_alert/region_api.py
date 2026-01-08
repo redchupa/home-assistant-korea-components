@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 
 import aiohttp
 
-from ..const import LOGGER, SSL_CONTEXT
+from ..const import LOGGER
 
 
 class SafetyAlertRegionApiClient:
@@ -22,8 +22,8 @@ class SafetyAlertRegionApiClient:
     def _get_ssl_context(self) -> ssl.SSLContext:
         """Get SSL context with lazy loading to avoid blocking calls in event loop."""
         if self._ssl_context is None:
-            # SSL 컨텍스트 설정 - DH_KEY_TOO_SMALL 에러 해결
-            self._ssl_context = SSL_CONTEXT
+            # SSL 컨텍스트 생성 - 공유 객체를 수정하지 않고 새로 생성
+            self._ssl_context = ssl.create_default_context()
             self._ssl_context.check_hostname = False
             self._ssl_context.verify_mode = ssl.CERT_NONE
 
