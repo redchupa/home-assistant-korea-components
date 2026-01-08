@@ -200,7 +200,7 @@ class KakaoMapDevice:
         """Extract minutes from time data."""
         if isinstance(time_data, dict):
             value = time_data.get("value")
-            if value:
+            if value is not None:
                 return round(value / 60)  # Convert seconds to minutes
         elif isinstance(time_data, (int, float)):
             return round(time_data / 60)
@@ -218,7 +218,7 @@ class KakaoMapDevice:
         """Extract distance in kilometers."""
         if isinstance(distance_data, dict):
             value = distance_data.get("value")
-            if value:
+            if value is not None:
                 return round(value / 1000, 1)  # Convert meters to kilometers
         elif isinstance(distance_data, (int, float)):
             return round(distance_data / 1000, 1)

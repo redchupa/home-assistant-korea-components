@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional
 import aiohttp
 
 from .exceptions import KakaoMapConnectionError, KakaoMapDataError
-from ..const import LOGGER
+from ..const import LOGGER, TZ_ASIA_SEOUL
 
 
 class KakaoMapApiClient:
@@ -85,7 +85,9 @@ class KakaoMapApiClient:
         if start_time:
             params["startAt"] = start_time
         else:
-            params["startAt"] = datetime.now().strftime("%Y%m%d%H%M") + "0"
+            # Use Korea timezone for correct time
+            now_korea = datetime.now(TZ_ASIA_SEOUL)
+            params["startAt"] = now_korea.strftime("%Y%m%d%H%M") + "0"
 
         headers = {
             "Accept": "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript, */*; q=0.01",
