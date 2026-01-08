@@ -72,12 +72,15 @@ class GoodsFlowApiClient:
                 response.raise_for_status()
                 return await response.json()
 
+        except (GoodsFlowAuthError, GoodsFlowConnectionError, GoodsFlowDataError):
+            # 이미 우리가 raise한 예외는 그대로 re-raise
+            raise
         except aiohttp.ClientError as e:
             LOGGER.error(f"GoodsFlow API request failed: {e}")
-            raise GoodsFlowConnectionError(f"Request failed: {e}")
+            raise GoodsFlowConnectionError(f"Request failed: {e}") from e
         except Exception as e:
             LOGGER.error(f"Unexpected error in GoodsFlow API request: {e}")
-            raise GoodsFlowDataError(f"Unexpected error: {e}")
+            raise GoodsFlowDataError(f"Unexpected error: {e}") from e
 
     async def async_get_tracking_list(
         self, limit: int = 10, start: int = 0, type_filter: str = "ALL"
